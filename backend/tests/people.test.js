@@ -111,7 +111,7 @@ describe("Feature 4 — People Management", () => {
       await createPerson(app, token);
 
       const response = await request(app)
-        .get("/courses/people")
+        .get("/league/people")
         .set(authHeader(token));
 
       expect(response.status).toBe(200);
@@ -126,7 +126,7 @@ describe("Feature 4 — People Management", () => {
       const created = await createPerson(app, token);
 
       const response = await request(app)
-        .put(`/courses/people/${created.body.id}`)
+        .put(`/league/people/${created.body.id}`)
         .set(authHeader(token))
         .send({
           personId: created.body.id,
@@ -151,7 +151,7 @@ describe("Feature 4 — People Management", () => {
       const created = await createPerson(app, token);
 
       const response = await request(app)
-        .delete(`/courses/people/${created.body.id}`)
+        .delete(`/league/people/${created.body.id}`)
         .set(authHeader(token));
 
       expect(response.status).toBe(200);
@@ -169,7 +169,7 @@ describe("Feature 4 — People Management", () => {
       });
 
       const response = await request(app)
-        .delete(`/courses/people/${created.body.id}`)
+        .delete(`/league/people/${created.body.id}`)
         .set(authHeader(token));
 
       expect(response.status).toBe(200);
@@ -189,7 +189,7 @@ describe("Feature 4 — People Management", () => {
       });
 
       const response = await request(app)
-        .get("/courses/people")
+        .get("/league/people")
         .set(authHeader(student.body.token));
 
       expect(response.status).toBe(200);
@@ -204,7 +204,7 @@ describe("Feature 4 — People Management", () => {
       });
 
       const response = await request(app)
-        .post("/courses/people")
+        .post("/league/people")
         .set(authHeader(student.body.token))
         .send(validPerson());
 
@@ -220,7 +220,7 @@ describe("Feature 4 — People Management", () => {
       });
 
       const response = await request(app)
-        .get("/courses/users")
+        .get("/league/users")
         .set(authHeader(student.body.token));
 
       expect(response.status).toBe(403);
@@ -228,7 +228,7 @@ describe("Feature 4 — People Management", () => {
     });
 
     it("Unauthenticated API request to people", async () => {
-      const response = await request(app).get("/courses/people");
+      const response = await request(app).get("/league/people");
 
       expect(response.status).toBe(401);
       expect(response.body.message).toMatch(/Unauthorized/i);
@@ -246,7 +246,7 @@ describe("Feature 4 — People Management", () => {
       });
 
       const response = await request(app)
-        .delete(`/courses/people/${person.body.id}`)
+        .delete(`/league/people/${person.body.id}`)
         .set(authHeader(token));
 
       expect(response.status).toBe(400);

@@ -5,6 +5,7 @@ import personRoutes from "./person.routes.js";
 import teamRoutes from "./team.routes.js";
 import userRoutes from "./user.routes.js";
 import seasonRoutes from "./season.routes.js";
+import gameRoutes from "./game.routes.js";
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use("/people", personRoutes);
 router.use("/teams", teamRoutes);
 router.use("/users", userRoutes);
 router.use("/seasons", seasonRoutes);
+router.use("/games", gameRoutes);
 
 export default router;

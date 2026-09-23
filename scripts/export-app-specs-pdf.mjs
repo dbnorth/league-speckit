@@ -245,7 +245,7 @@ function buildCombinedMarkdown() {
   );
 
   return [
-    "# Courses Speckit — Application Specifications",
+    "# League Speckit — Application Specifications",
     "",
     "Product specs only: architecture decisions, quality attributes, C4 diagrams, and feature specifications (including UI mockups when linked under `docs/ui/`).",
     "",

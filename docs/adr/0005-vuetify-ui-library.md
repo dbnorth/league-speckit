@@ -25,7 +25,7 @@ Adopt **Vuetify 4** as the **only** primary UI component library for OC CS Speck
 | Concern | Choice |
 |---------|--------|
 | **Library** | Vuetify 4 |
-| **Plugin** | `vite-plugin-vuetify` (`autoImport: false` — explicit imports as required by course rules) |
+| **Plugin** | `vite-plugin-vuetify` (`autoImport: false` — explicit imports as required by Speckit rules) |
 | **Icons** | `@mdi/font` |
 | **Theme** | Light theme tokens in `frontend/src/plugins/vuetify.js` (OC Academic Edition — primary maroon `#801328`, Inter font) |
 | **Encoding** | [ui-style-system.mdc](../../.cursor/rules/ui-style-system.mdc) — Vuetify only; **no Tailwind** as the design system |
@@ -59,7 +59,7 @@ views / components  ──►  Vuetify 4 components (v-btn, v-dialog, v-text-fie
 
 - Bundle size and Material look are heavier than a minimal custom CSS approach.
 - Students must learn Vuetify APIs (props, density, slots) in addition to Vue.
-- Strict “no Tailwind” means utility-first habits from other courses do not transfer; occasional scoped CSS is fine for layout tweaks, not a second design system.
+- Strict “no Tailwind” means utility-first habits from other stacks do not transfer; occasional scoped CSS is fine for layout tweaks, not a second design system.
 - Vuetify major upgrades (3 → 4 already taken) can require coordinated rule and view updates.
 
 ## Alternatives considered
@@ -67,8 +67,8 @@ views / components  ──►  Vuetify 4 components (v-btn, v-dialog, v-text-fie
 | Option | Why not |
 |--------|---------|
 | **Tailwind CSS (+ Headless UI)** | Flexible, but no single component contract for Screen Requirements; conflicts with Speckit’s “no Tailwind” academic edition rule and invites one-off styling. |
-| **PrimeVue / Quasar** | Capable Vue libraries, but not the OC Speckit / course standard; would fork docs and agent rules. |
-| **Naive UI / Element Plus** | Strong Vue 3 kits; same problem — second ecosystem without course alignment. |
+| **PrimeVue / Quasar** | Capable Vue libraries, but not the OC Speckit standard; would fork docs and agent rules. |
+| **Naive UI / Element Plus** | Strong Vue 3 kits; same problem — second ecosystem without Speckit alignment. |
 | **Custom CSS / BEM only** | Too slow for feature-by-feature SDD; agents and students reinvent dialogs/forms inconsistently. |
 | **Bootstrap Vue** | Aging fit for Vue 3 + Vite teaching path; weaker Material/academic token story for this kit. |
 

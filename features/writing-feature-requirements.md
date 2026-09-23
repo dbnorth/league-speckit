@@ -21,7 +21,7 @@ A **user story** is one outcome _inside_ that feature — something a person (or
 | **Grain**               | A product capability / vertical slice                                    | One user (or system) outcome inside that slice       |
 | **Artifact**            | One file: `features/feature-N-short-name.md`                             | Sections `US-N.n` inside that file                   |
 | **Git**                 | One branch: `feature/N-short-name`                                       | No branch of its own                                 |
-| **Size check**          | Often days of work; several stories; shared data/courses-api-dbn/screens | Verifiable in one independent test                   |
+| **Size check**          | Often days of work; several stories; shared data/API/screens | Verifiable in one independent test                   |
 | **Question it answers** | “What capability are we adding to the product?”                          | “What can someone _do_ once this capability exists?” |
 
 **Rule of thumb:** if you would open a new branch and merge a coherent chunk of app behavior, it is a **feature**. If it is one of several related outcomes that share the same screens, tables, and release, it is a **story**.

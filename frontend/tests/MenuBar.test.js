@@ -137,6 +137,7 @@ describe("Feature 1 — User Authentication & Session Management", () => {
       expect(wrapper.text()).not.toContain("Leagues");
       expect(wrapper.text()).not.toContain("People");
       expect(wrapper.text()).not.toContain("Teams");
+      expect(wrapper.text()).not.toContain("Games");
     });
 
     it("Signed-in user sees Sign out in MenuBar", async () => {
@@ -158,6 +159,7 @@ describe("Feature 1 — User Authentication & Session Management", () => {
       expect(wrapper.text()).not.toContain("Leagues");
       expect(wrapper.text()).not.toContain("People");
       expect(wrapper.text()).not.toContain("Teams");
+      expect(wrapper.text()).not.toContain("Games");
     });
 
     it("Admin MenuBar in Feature 1 has Sign out but no catalog links yet", async () => {
@@ -166,10 +168,13 @@ describe("Feature 1 — User Authentication & Session Management", () => {
       wrapper = mounted.wrapper;
 
       expect(wrapper.text()).toContain("Sign out");
-      expect(wrapper.text()).toContain("Seasons");
-      expect(wrapper.text()).toContain("Leagues");
-      expect(wrapper.text()).toContain("People");
-      expect(wrapper.text()).toContain("Teams");
+      const catalogOrder = wrapper
+        .findAll("a, button")
+        .map((item) => item.text().trim())
+        .filter((label) =>
+          ["Leagues", "Teams", "Games", "People", "Seasons"].includes(label)
+        );
+      expect(catalogOrder).toEqual(["Leagues", "Teams", "Games", "People", "Seasons"]);
     });
   });
 });
@@ -374,6 +379,57 @@ describe("Feature 5 — Team Management", () => {
       wrapper = mounted.wrapper;
 
       expect(wrapper.text()).not.toContain("Teams");
+    });
+  });
+});
+
+describe("Feature 6 — Game Management", () => {
+  let wrapper;
+  let router;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+  });
+
+  describe("US-6.1 — Select to work with Games", () => {
+    it("Menu Selection", async () => {
+      Utils.setStore("user", adminUser);
+      const mounted = await mountMenuBar("/");
+      wrapper = mounted.wrapper;
+      router = mounted.router;
+
+      const gamesBtn = wrapper.findAllComponents({ name: "VBtn" }).find((btn) =>
+        btn.text().includes("Games")
+      );
+      expect(gamesBtn).toBeTruthy();
+      expect(gamesBtn.props("to")).toBe("/games");
+
+      const link = gamesBtn.find("a");
+      if (link.exists()) {
+        link.element.click();
+      } else {
+        gamesBtn.element.click();
+      }
+      await flushPromises();
+
+      await vi.waitFor(() => {
+        expect(router.currentRoute.value.name).toBe("games");
+      });
+    });
+  });
+
+  describe("US-6.7 — Restrict game management to admins", () => {
+    it("Student does not see Games in the menu", async () => {
+      Utils.setStore("user", studentUser);
+      const mounted = await mountMenuBar("/");
+      wrapper = mounted.wrapper;
+
+      expect(wrapper.text()).not.toContain("Games");
     });
   });
 });

@@ -62,7 +62,7 @@ Bearer token                     flat JSON out / { message } on error
 
 | Option | Why not |
 |--------|---------|
-| **GraphQL** | Powerful queries, but heavier stack, different testing story, and weaker fit for short Gherkin API scenarios in this course. |
+| **GraphQL** | Powerful queries, but heavier stack, different testing story, and weaker fit for short Gherkin API scenarios in this project. |
 | **gRPC / protobuf** | Excellent for service-to-service; poor browser/teaching fit without gateways. |
 | **JSON:API / OData envelopes** | Standardized wrappers add ceremony; Speckit prefers flat JSON for clarity. |
 | **`{ success, data }` custom envelope** | Extra nesting in every client and test; rejected in `api-conventions.mdc`. |

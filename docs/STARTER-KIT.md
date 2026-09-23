@@ -106,17 +106,17 @@ git checkout -b dev
 
 | File                    | Default `name`            | Change to             |
 | ----------------------- | ------------------------- | --------------------- |
-| `package.json` (root)   | `course-speckit`          | e.g. `myapp-speckit`  |
-| `frontend/package.json` | `course-speckit-frontend` | e.g. `myapp-frontend` |
-| `backend/package.json`  | `course-speckit-backend`  | e.g. `myapp-backend`  |
+| `package.json` (root)   | `league-speckit`          | e.g. `myapp-speckit`  |
+| `frontend/package.json` | `league-speckit-frontend` | e.g. `myapp-frontend` |
+| `backend/package.json`  | `league-speckit-backend`  | e.g. `myapp-backend`  |
 
 Then do a **project-wide search-and-replace** for these placeholder strings across the unzipped tree (IDE find-in-files or `rg`). You are not rewriting every file — only files that contain the string will change; most rules and framework docs will not.
 
 | Placeholder           | Replace with                       | Typical hits                                                    |
 | --------------------- | ---------------------------------- | --------------------------------------------------------------- |
-| `Courses Speckit`     | Your display name                  | `README.md`, `Home.vue`, `server.js` log line, Agility examples |
-| `courses-speckit-db`  | Your MySQL database name           | `.env.example`, `.env.test.example`, `db.config.js`             |
-| `/courses-api-dbn/`   | Your API mount path (if different) | `backend/server.js`, `frontend/src/services/services.js`        |
+| `League Speckit`     | Your display name                  | `README.md`, `Home.vue`, `server.js` log line, Agility examples |
+| `league-speckit-db`  | Your MySQL database name           | `.env.example`, `.env.test.example`, `db.config.js`             |
+| `/league/`   | Your API mount path (if different) | `backend/server.js`, `frontend/src/services/services.js`        |
 | Ports `8082` / `3200` | Only if you must change them       | Vite config, Express `PORT`, CORS origin                        |
 
 Also update when relevant:

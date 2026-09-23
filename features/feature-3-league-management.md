@@ -78,7 +78,7 @@
 **So that** students cannot create, edit, or delete leagues
 
 **Priority:** P1  
-**Independent test:** Sign in as a student — **Leagues** is hidden; `POST /courses/leagues` returns `403`  
+**Independent test:** Sign in as a student — **Leagues** is hidden; `POST /league/leagues` returns `403`  
 **Acceptance scenarios:** see ### US-3.7 under Acceptance Criteria
 
 ## Requirements
@@ -101,11 +101,11 @@
 
 - Feature 1 auth/`MenuBar` and Feature 2 season management MUST be merged to `dev` before implementing this feature.
 - A user with role `admin` exists (Feature 1 `role`; tests may seed an admin). Feature 1 default register role may be `worker`/`student` — not sufficient for this UI.
-- Leagues are a shared catalog and are not assigned to users. **Depends on Feature 2** is for `MenuBar` (**Seasons** already present). This feature does **not** add an FK from `leagues` to `seasons`.
+- Leagues are a shared catalog and are not assigned to users. **Depends on Feature 2** is for `MenuBar` (**Seasons** already present). [Feature 2](feature-2-season-management.md) attaches seasons to a league (`seasons.leagueId`). A league MAY have many seasons.
 - `sport` is a **closed list** (`soccer`, `baseball`, `volleyball`, `football`), not free text. Multiple leagues MAY share the same sport.
 - Student enrollment in leagues is a later feature. API `GET` of the league catalog is in this feature.
 - Leagues use **dialog-based** workflows (no split sidebar / main panel).
-- API mount for this resource is `/courses/…`. Use `/courses/leagues`.
+- API mount for this resource is `/league/…`. Use `/league/leagues`.
 
 ## Edge Cases
 
@@ -117,7 +117,7 @@
 - Unknown `leagueId` on PUT/DELETE → `404` with `{ "message": "League with id=<id> not found." }`
 - Authenticated `student` (or any non-admin) on `POST` / `PUT` / `DELETE` → `403`.
 - Authenticated `student` on `GET` → `200` with the shared catalog.
-- Unauthenticated user on `/leagues` or `GET /courses/leagues` → redirect or `401`.
+- Unauthenticated user on `/leagues` or `GET /league/leagues` → redirect or `401`.
 
 ## Success Criteria
 
@@ -134,7 +134,7 @@ Leagues are a **shared catalog**. They are not owned by or assigned to a user. O
 
 | Rule               | Requirement                                                                                                                |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| **Read scope**     | `GET /courses/leagues` returns **all** leagues to any authenticated user.                                                  |
+| **Read scope**     | `GET /league/leagues` returns **all** leagues to any authenticated user.                                                  |
 | **Write scope**    | `POST`, `PUT`, and `DELETE` are allowed only when `req.user.role` is `admin`.                                              |
 | **Create scope**   | New leagues have no owner. Do not persist `userId`. Ignore `userId` if sent in the body.                                   |
 | **Missing league** | Unknown `leagueId` → `404` with `{ "message": "League with id=<id> not found." }`. Never use ownership `404` to hide rows. |
@@ -148,10 +148,10 @@ Leagues are a **shared catalog**. They are not owned by or assigned to a user. O
 
 | Method   | Endpoint                     | Auth       | Purpose                                 |
 | -------- | ---------------------------- | ---------- | --------------------------------------- |
-| `GET`    | `/courses/leagues`           | Yes        | Fetch all leagues in the shared catalog |
-| `POST`   | `/courses/leagues`           | Yes, admin | Create a league in the shared catalog   |
-| `PUT`    | `/courses/leagues/:leagueId` | Yes, admin | Update a league                         |
-| `DELETE` | `/courses/leagues/:leagueId` | Yes, admin | Delete a league                         |
+| `GET`    | `/league/leagues`           | Yes        | Fetch all leagues in the shared catalog |
+| `POST`   | `/league/leagues`           | Yes, admin | Create a league in the shared catalog   |
+| `PUT`    | `/league/leagues/:leagueId` | Yes, admin | Update a league                         |
+| `DELETE` | `/league/leagues/:leagueId` | Yes, admin | Delete a league                         |
 
 **Create league request body:**
 
@@ -162,7 +162,7 @@ Leagues are a **shared catalog**. They are not owned by or assigned to a user. O
 }
 ```
 
-Do not send `id` or `userId` on create. If `userId` is present, ignore it. `GET /courses/leagues` returns an **array** of league objects in the success shape below.
+Do not send `id` or `userId` on create. If `userId` is present, ignore it. `GET /league/leagues` returns an **array** of league objects in the success shape below.
 
 **Update league request body:** same fields as create (no `id` / `userId`).
 
@@ -233,7 +233,8 @@ Do not send `id` or `userId` on create. If `userId` is present, ignore it. `GET 
 
 ### Associations (in `models/index.js`)
 
-None in this feature
+- `League hasMany Season` and `Season belongsTo League` are defined in [Feature 2](feature-2-season-management.md).
+- `League hasMany Team` and `Team belongsTo League` are defined in [Feature 5](feature-5-team-management.md).
 
 ---
 
@@ -418,20 +419,20 @@ None in this feature
 #### Scenario: Student can list leagues via the API
 
 - **Given** I am signed in as a user with role `student`
-- **When** I request `GET /courses/leagues`
+- **When** I request `GET /league/leagues`
 - **Then** the API returns `200` with an array of league objects
 
 #### Scenario: Student cannot create a league via the API
 
 - **Given** I am signed in as a user with role `student`
-- **When** I send `POST /courses/leagues` with a valid league body
+- **When** I send `POST /league/leagues` with a valid league body
 - **Then** the API returns `403` with `{ "message": "Admin role required." }`
 - **And** no new league is stored
 
 #### Scenario: Unauthenticated API request to leagues
 
 - **Given** I have no valid session token
-- **When** I request `GET /courses/leagues`
+- **When** I request `GET /league/leagues`
 - **Then** the API returns `401` with an unauthorized message
 
 #### Scenario: Unauthenticated user navigates to leagues
@@ -504,7 +505,7 @@ Do not implement behavior not in this spec.
 
 - Student-facing league catalog UI (API `GET` is in this feature)
 - Student enrollment in leagues (later feature)
-- Assigning a league to a season or user ([Feature 5](feature-5-team-management.md) attaches teams to a league and forbids `DELETE` of a league that still has teams)
+- Assigning a league to a user ([Feature 2](feature-2-season-management.md) attaches seasons to a league; [Feature 5](feature-5-team-management.md) attaches teams to a league)
 - Non-admin league management UI
 - Creating `MenuBar` (introduced in [Feature 1](feature-1-user-auth.md); this feature only adds **Leagues** for role `admin`)
 - Sports other than `soccer`, `baseball`, `volleyball`, and `football`
@@ -515,7 +516,8 @@ Do not implement behavior not in this spec.
 
 - `MenuBar` is Feature 1 chrome; Feature 2 added **Seasons** and this feature added **Leagues** for `admin`.
 - [Feature 4](feature-4-people-management.md) adds **People** (allowed role `admin`) to this `MenuBar`; it MUST NOT create a second `MenuBar`.
-- The `leagues` table is a shared catalog with no `userId` and no FK to `seasons`. Later features that enroll people or attach teams MUST use this catalog, not a per-user league list.
-- [Feature 5](feature-5-team-management.md) MUST reject `DELETE /courses/leagues/:leagueId` with `400` when teams still reference that league.
+- The `leagues` table is a shared catalog with no `userId`. Seasons and teams reference this catalog through `leagueId`.
+- [Feature 2](feature-2-season-management.md) MUST reject `DELETE /league/leagues/:leagueId` with `400` when seasons still reference that league.
+- [Feature 5](feature-5-team-management.md) MUST reject `DELETE /league/leagues/:leagueId` with `400` when teams still reference that league.
 
 ---

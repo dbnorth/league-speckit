@@ -78,7 +78,7 @@ Copy from [README.md](./README.md#template) or use this filled outline:
 
 **Status:** Proposed
 **Date:** YYYY-MM-DD
-**Deciders:** your team / course
+**Deciders:** your team
 
 ## Context
 ## Decision

@@ -78,16 +78,16 @@
 **So that** students cannot create, edit, or delete people
 
 **Priority:** P1  
-**Independent test:** Sign in as a student — **People** is hidden; `POST /courses/people` returns `403`  
+**Independent test:** Sign in as a student — **People** is hidden; `POST /league/people` returns `403`  
 **Acceptance scenarios:** see ### US-4.7 under Acceptance Criteria
 
 ## Requirements
 
 ### Functional Requirements
 
-- **FR-001**: All people endpoints MUST require a valid session (`authenticate`). `GET /courses/people` MUST be allowed for any authenticated role. `POST`, `PUT`, and `DELETE` on people, and `GET /courses/users`, MUST require `req.user.role` equal to `admin`.
+- **FR-001**: All people endpoints MUST require a valid session (`authenticate`). `GET /league/people` MUST be allowed for any authenticated role. `POST`, `PUT`, and `DELETE` on people, and `GET /league/users`, MUST require `req.user.role` equal to `admin`.
 - **FR-002**: People MUST be a **shared catalog**. A person is not owned by the signed-in admin. Optional `userId` is a **link** to a Feature 1 login account, not row ownership.
-- **FR-003**: Authenticated non-admin users (including `student`) MUST receive `403` with `{ "message": "Admin role required." }` on `POST`, `PUT`, and `DELETE` of people and on `GET /courses/users`. `GET /courses/people` MUST return `200` for any authenticated user. They MUST NOT see **People** in `MenuBar`.
+- **FR-003**: Authenticated non-admin users (including `student`) MUST receive `403` with `{ "message": "Admin role required." }` on `POST`, `PUT`, and `DELETE` of people and on `GET /league/users`. `GET /league/people` MUST return `200` for any authenticated user. They MUST NOT see **People** in `MenuBar`.
 - **FR-004**: Required person fields MUST be present and trimmed; empty or whitespace-only values MUST be rejected (client block and/or `400`).
 - **FR-005**: Unauthenticated people API requests MUST return `401`. Unauthenticated navigation to `/people` MUST redirect to `login`.
 - **FR-006**: People MUST be ordered alphabetically by `lastName`, then `firstName`, in API responses.
@@ -110,7 +110,7 @@
 - Person `email` uniqueness is only on `people`. A linked user's `users.email` MAY differ from the person's `email`.
 - `gender` is a closed list (`male`, `female`, `other`), not free text.
 - People use **dialog-based** workflows (no split sidebar / main panel).
-- API mount for this resource is `/courses/…`. Use `/courses/people`.
+- API mount for this resource is `/league/…`. Use `/league/people`.
 
 ## Edge Cases
 
@@ -128,9 +128,9 @@
 - `userId` already linked to another person → `400` with `{ "message": "User is already linked to a person." }`
 - Unknown `personId` on PUT/DELETE → `404` with `{ "message": "Person with id=<id> not found." }`
 - Delete person that has a linked user → person row is deleted; the Feature 1 user remains.
-- Authenticated `student` (or any non-admin) on `POST` / `PUT` / `DELETE` or `GET /courses/users` → `403`.
-- Authenticated `student` on `GET /courses/people` → `200` with the shared catalog.
-- Unauthenticated user on `/people` or `GET /courses/people` → redirect or `401`.
+- Authenticated `student` (or any non-admin) on `POST` / `PUT` / `DELETE` or `GET /league/users` → `403`.
+- Authenticated `student` on `GET /league/people` → `200` with the shared catalog.
+- Unauthenticated user on `/people` or `GET /league/people` → redirect or `401`.
 
 ## Success Criteria
 
@@ -148,13 +148,13 @@ People are a **shared catalog**. They are not owned by the signed-in admin. Only
 
 | Rule               | Requirement                                                                                                                |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| **Read scope**     | `GET /courses/people` returns **all** people to any authenticated user.                                                    |
+| **Read scope**     | `GET /league/people` returns **all** people to any authenticated user.                                                    |
 | **Write scope**    | `POST`, `PUT`, and `DELETE` are allowed only when `req.user.role` is `admin`.                                              |
 | **Create scope**   | New people have no owner. Optional `userId` links to `users.id` when provided.                                             |
 | **Missing person** | Unknown `personId` → `404` with `{ "message": "Person with id=<id> not found." }`. Never use ownership `404` to hide rows. |
-| **Non-admin**      | Authenticated non-admin `GET /courses/people` → `200`. Mutations and `GET /courses/users` → `403` with `{ "message": "Admin role required." }`. |
+| **Non-admin**      | Authenticated non-admin `GET /league/people` → `200`. Mutations and `GET /league/users` → `403` with `{ "message": "Admin role required." }`. |
 | **UI scope**       | **People** menu and `/people` are admin-only. Students do not see this manager.                                            |
-| **Implementation** | Use `authenticate` on all endpoints. Use `requireAdmin` after `authenticate` on `POST`, `PUT`, `DELETE`, and `GET /courses/users`. |
+| **Implementation** | Use `authenticate` on all endpoints. Use `requireAdmin` after `authenticate` on `POST`, `PUT`, `DELETE`, and `GET /league/users`. |
 
 ---
 
@@ -162,11 +162,11 @@ People are a **shared catalog**. They are not owned by the signed-in admin. Only
 
 | Method   | Endpoint                     | Auth       | Purpose                                      |
 | -------- | ---------------------------- | ---------- | -------------------------------------------- |
-| `GET`    | `/courses/people`            | Yes        | Fetch all people in the shared catalog       |
-| `POST`   | `/courses/people`            | Yes, admin | Create a person in the shared catalog        |
-| `PUT`    | `/courses/people/:personId`  | Yes, admin | Update a person                              |
-| `DELETE` | `/courses/people/:personId`  | Yes, admin | Delete a person                              |
-| `GET`    | `/courses/users`             | Yes, admin | List users for the optional person–user link |
+| `GET`    | `/league/people`            | Yes        | Fetch all people in the shared catalog       |
+| `POST`   | `/league/people`            | Yes, admin | Create a person in the shared catalog        |
+| `PUT`    | `/league/people/:personId`  | Yes, admin | Update a person                              |
+| `DELETE` | `/league/people/:personId`  | Yes, admin | Delete a person                              |
+| `GET`    | `/league/users`             | Yes, admin | List users for the optional person–user link |
 
 **Create person request body:**
 
@@ -203,9 +203,9 @@ People are a **shared catalog**. They are not owned by the signed-in admin. Only
 
 When the person has no linked user, `userId` is `null`.
 
-`GET /courses/people` returns an **array** of person objects in the success shape above.
+`GET /league/people` returns an **array** of person objects in the success shape above.
 
-**User list success response** (`200` on `GET /courses/users`): an array of `{ "id", "username", "fName", "lName" }`. Do **not** include `password`.
+**User list success response** (`200` on `GET /league/users`): an array of `{ "id", "username", "fName", "lName" }`. Do **not** include `password`.
 
 **Error response:** `{ "message": "Human-readable explanation." }` with appropriate HTTP status.  
 **Not found:** `404` (do not use `403` for missing person id).
@@ -224,7 +224,7 @@ When the person has no linked user, `userId` is `null`.
   - **Email** (`v-text-field`)
   - **Birth Date** (`v-date-picker`)
   - **Gender** (`v-select`: `male`, `female`, `other`)
-  - **User** (`v-select` of existing Feature 1 users from `GET /courses/users`, display `username`; **optional** — may be left empty)
+  - **User** (`v-select` of existing Feature 1 users from `GET /league/users`, display `username`; **optional** — may be left empty)
 - **Add Person** actions: **Create** (`oc-cta`) / **Cancel** (secondary `variant="text"` or `outlined`).
 - List: `v-table` (or `v-list`); columns **last name**, **first name**, **email**, **gender**, and **user** (username when linked, empty when not); rows ordered by last name then first name (FR-006).
 - Icon-only row actions use `size="small"` and accessible `aria-label`s:
@@ -533,26 +533,26 @@ When the person has no linked user, `userId` is `null`.
 #### Scenario: Student can list people via the API
 
 - **Given** I am signed in as a user with role `student`
-- **When** I request `GET /courses/people`
+- **When** I request `GET /league/people`
 - **Then** the API returns `200` with an array of person objects
 
 #### Scenario: Student cannot create a person via the API
 
 - **Given** I am signed in as a user with role `student`
-- **When** I send `POST /courses/people` with a valid person body
+- **When** I send `POST /league/people` with a valid person body
 - **Then** the API returns `403` with `{ "message": "Admin role required." }`
 - **And** no new person is stored
 
 #### Scenario: Student cannot list users via the API
 
 - **Given** I am signed in as a user with role `student`
-- **When** I request `GET /courses/users`
+- **When** I request `GET /league/users`
 - **Then** the API returns `403` with `{ "message": "Admin role required." }`
 
 #### Scenario: Unauthenticated API request to people
 
 - **Given** I have no valid session token
-- **When** I request `GET /courses/people`
+- **When** I request `GET /league/people`
 - **Then** the API returns `401` with an unauthorized message
 
 #### Scenario: Unauthenticated user navigates to people
@@ -644,6 +644,6 @@ Do not implement behavior not in this spec.
 
 - `MenuBar` is Feature 1 chrome; Features 2–3 added **Seasons** and **Leagues**; this feature added **People** for `admin`.
 - Feature 5 adds **Teams** to this `MenuBar` and MUST use this people catalog for team players; it MUST NOT create a second `MenuBar` or a second people list.
-- [Feature 5](feature-5-team-management.md) MUST reject `DELETE /courses/people/:personId` with `400` when that person is still a player on a team.
+- [Feature 5](feature-5-team-management.md) MUST reject `DELETE /league/people/:personId` with `400` when that person is still a player on a team.
 
 ---

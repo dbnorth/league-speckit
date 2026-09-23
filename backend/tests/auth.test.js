@@ -43,7 +43,7 @@ describe("Feature 1 — User Authentication & Session Management", () => {
 
     it("User submits registration with missing email", async () => {
       const response = await request(app)
-        .post("/courses/register")
+        .post("/league/register")
         .send(validRegisterPayload({ email: "" }));
 
       expect(response.status).toBe(400);
@@ -52,7 +52,7 @@ describe("Feature 1 — User Authentication & Session Management", () => {
 
     it("User submits registration with password too short", async () => {
       const response = await request(app)
-        .post("/courses/register")
+        .post("/league/register")
         .send(validRegisterPayload({ password: "short" }));
 
       expect(response.status).toBe(400);
@@ -65,7 +65,7 @@ describe("Feature 1 — User Authentication & Session Management", () => {
       await registerUser(app);
 
       const response = await request(app)
-        .post("/courses/register")
+        .post("/league/register")
         .send(
           validRegisterPayload({
             email: "other@example.com",
@@ -81,7 +81,7 @@ describe("Feature 1 — User Authentication & Session Management", () => {
       await registerUser(app);
 
       const response = await request(app)
-        .post("/courses/register")
+        .post("/league/register")
         .send(
           validRegisterPayload({
             email: "jane@example.com",
@@ -150,7 +150,7 @@ describe("Feature 1 — User Authentication & Session Management", () => {
       const { token, userId } = registerResponse.body;
 
       const response = await request(app)
-        .post("/courses/logout")
+        .post("/league/logout")
         .set(authHeader(token));
 
       expect(response.status).toBe(200);
@@ -159,7 +159,7 @@ describe("Feature 1 — User Authentication & Session Management", () => {
       expect(session.token).toBe("");
 
       const protectedResponse = await request(app)
-        .get(`/courses/users/${userId}`)
+        .get(`/league/users/${userId}`)
         .set(authHeader(token));
 
       expect(protectedResponse.status).toBe(401);

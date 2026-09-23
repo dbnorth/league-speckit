@@ -7,6 +7,8 @@ import Seasons from "./views/SeasonList.vue";
 import Leagues from "./views/LeagueList.vue";
 import People from "./views/PeopleList.vue";
 import Teams from "./views/TeamList.vue";
+import Team from "./views/Team.vue";
+import Games from "./views/Games.vue";
 
 const publicRouteNames = new Set(["login", "register"]);
 
@@ -47,6 +49,16 @@ const router = createRouter({
       path: "/teams",
       name: "teams",
       component: Teams,
+    },
+    {
+      path: "/teams/:teamId",
+      name: "team",
+      component: Team,
+    },
+    {
+      path: "/games",
+      name: "games",
+      component: Games,
     },
     {
       path: "/:pathMatch(.*)*",

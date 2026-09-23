@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import seasonServices from "../services/seasonServices.js";
+import leagueServices from "../services/leagueServices.js";
 import SeasonForm from "../components/SeasonForm.vue";
 import { toDateInputValue, formatDate } from "../config/validation.js";
 
@@ -8,9 +9,11 @@ const emptyForm = () => ({
   name: "",
   startDate: "",
   endDate: "",
+  leagueId: null,
 });
 
 const seasons = ref([]);
+const leagues = ref([]);
 const loading = ref(false);
 const listError = ref("");
 const formDialogOpen = ref(false);
@@ -36,8 +39,12 @@ const retrieveSeasons = async () => {
   listError.value = "";
 
   try {
-    const response = await seasonServices.getseasons();
-    seasons.value = response.data;
+    const [seasonsResponse, leaguesResponse] = await Promise.all([
+      seasonServices.getseasons(),
+      leagueServices.getleagues(),
+    ]);
+    seasons.value = seasonsResponse.data;
+    leagues.value = leaguesResponse.data;
   } catch (error) {
     listError.value =
       error.response?.data?.message || "Failed to fetch seasons.";
@@ -61,6 +68,7 @@ const openEditDialog = (season) => {
     name: season.name ?? "",
     startDate: toDateInputValue(season.startDate),
     endDate: toDateInputValue(season.endDate),
+    leagueId: season.leagueId ?? null,
   };
   formError.value = "";
   formDialogOpen.value = true;
@@ -86,6 +94,7 @@ const saveSeason = async () => {
     name: form.value.name.trim(),
     startDate: form.value.startDate,
     endDate: form.value.endDate,
+    leagueId: form.value.leagueId,
   };
 
   try {
@@ -181,6 +190,7 @@ onMounted(retrieveSeasons);
           <thead>
             <tr>
               <th class="text-left">Season name</th>
+              <th class="text-left">League</th>
               <th class="text-left">Start date</th>
               <th class="text-left">End date</th>
               <th class="text-left">Actions</th>
@@ -189,6 +199,7 @@ onMounted(retrieveSeasons);
           <tbody>
             <tr v-for="season in seasons" :key="season.id">
               <td>{{ season.name }}</td>
+              <td>{{ season.league?.name }}</td>
               <td>{{ formatDate(season.startDate) }}</td>
               <td>{{ formatDate(season.endDate) }}</td>
               <td>
@@ -219,7 +230,12 @@ onMounted(retrieveSeasons);
       <v-card rounded="lg">
         <v-card-title>{{ formTitle }}</v-card-title>
         <v-card-text>
-          <SeasonForm ref="formRef" v-model="form" @submit="saveSeason" />
+          <SeasonForm
+            ref="formRef"
+            v-model="form"
+            :leagues="leagues"
+            @submit="saveSeason"
+          />
           <v-alert
             v-if="formError"
             type="error"

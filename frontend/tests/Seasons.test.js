@@ -5,7 +5,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { flushPromises } from "@vue/test-utils";
 import SeasonList from "../src/views/SeasonList.vue";
+import SeasonForm from "../src/components/SeasonForm.vue";
 import seasonServices from "../src/services/seasonServices.js";
+import leagueServices from "../src/services/leagueServices.js";
 import { mountWithPlugins } from "./testUtils.js";
 
 vi.mock("../src/services/seasonServices.js", () => ({
@@ -17,12 +19,34 @@ vi.mock("../src/services/seasonServices.js", () => ({
   },
 }));
 
+vi.mock("../src/services/leagueServices.js", () => ({
+  default: {
+    getleagues: vi.fn(),
+  },
+}));
+
+const soccerLeague = {
+  id: 1,
+  name: "OKC Youth Soccer",
+  sport: "soccer",
+};
+
 const fall2026 = {
   id: 1,
   name: "2026 Fall",
   startDate: "2026-08-15",
   endDate: "2026-12-15",
+  leagueId: 1,
+  league: soccerLeague,
 };
+
+const validSeasonForm = (overrides = {}) => ({
+  name: "2026 Fall",
+  startDate: "2026-08-15",
+  endDate: "2026-12-15",
+  leagueId: 1,
+  ...overrides,
+});
 
 const VDialogStub = {
   name: "VDialog",
@@ -37,12 +61,9 @@ const clickButton = async (wrapper, label) => {
   await flushPromises();
 };
 
-const fillSeasonForm = async (wrapper, { name, startDate, endDate }) => {
-  const nameInput = wrapper.findAll("input").find((input) => input.attributes("type") !== "date");
-  await nameInput.setValue(name);
-  const dates = wrapper.findAll('input[type="date"]');
-  await dates[0].setValue(startDate);
-  await dates[1].setValue(endDate);
+const fillSeasonForm = async (wrapper, overrides = {}) => {
+  const form = wrapper.findComponent(SeasonForm);
+  await form.setValue(validSeasonForm(overrides));
 };
 
 const mountSeasons = async () => {
@@ -65,6 +86,7 @@ describe("Feature 2 — Season Management", () => {
     seasonServices.createseason.mockResolvedValue({ data: fall2026 });
     seasonServices.updateseason.mockResolvedValue({ data: fall2026 });
     seasonServices.deleteseason.mockResolvedValue({ data: { message: "season deleted successfully." } });
+    leagueServices.getleagues.mockResolvedValue({ data: [soccerLeague] });
   });
 
   afterEach(() => {
@@ -91,17 +113,14 @@ describe("Feature 2 — Season Management", () => {
       wrapper = mounted.wrapper;
 
       await clickButton(wrapper, "+ New season");
-      await fillSeasonForm(wrapper, {
-        name: "2026 Fall",
-        startDate: "2026-08-15",
-        endDate: "2026-12-15",
-      });
+      await fillSeasonForm(wrapper);
       await clickButton(wrapper, "Create");
 
       expect(seasonServices.createseason).toHaveBeenCalledWith({
         name: "2026 Fall",
         startDate: "2026-08-15",
         endDate: "2026-12-15",
+        leagueId: 1,
       });
       expect(wrapper.find(".v-dialog-stub").exists()).toBe(false);
       expect(wrapper.text()).toContain("2026 Fall");
@@ -159,7 +178,7 @@ describe("Feature 2 — Season Management", () => {
 
     it("User creates a season with a duplicate name", async () => {
       seasonServices.createseason.mockRejectedValue({
-        response: { data: { message: "Season name is already taken." } },
+        response: { data: { message: "Season name is already taken in this league." } },
       });
 
       const mounted = await mountSeasons();
@@ -174,7 +193,7 @@ describe("Feature 2 — Season Management", () => {
       await clickButton(wrapper, "Create");
 
       expect(seasonServices.createseason).toHaveBeenCalled();
-      expect(wrapper.text()).toContain("Season name is already taken.");
+      expect(wrapper.text()).toContain("Season name is already taken in this league.");
       expect(wrapper.text()).toContain("+ New season");
       expect(wrapper.find(".v-dialog-stub").exists()).toBe(true);
     });
@@ -190,6 +209,8 @@ describe("Feature 2 — Season Management", () => {
             name: "2026 Spring",
             startDate: "2026-01-15",
             endDate: "2026-05-15",
+            leagueId: 1,
+            league: soccerLeague,
           },
         ],
       });

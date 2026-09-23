@@ -5,12 +5,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { flushPromises } from "@vue/test-utils";
 import TeamList from "../src/views/TeamList.vue";
+import Team from "../src/views/Team.vue";
 import TeamForm from "../src/components/TeamForm.vue";
 import PlayerForm from "../src/components/PlayerForm.vue";
 import teamServices from "../src/services/teamServices.js";
 import leagueServices from "../src/services/leagueServices.js";
 import peopleServices from "../src/services/peopleServices.js";
-import { mountWithPlugins } from "./testUtils.js";
+import { createTestRouter, mountWithPlugins } from "./testUtils.js";
 
 vi.mock("../src/services/teamServices.js", () => ({
   default: {
@@ -113,12 +114,24 @@ const fillPlayerForm = async (wrapper, overrides = {}) => {
   await form.setValue(validPlayerForm(overrides));
 };
 
+const mountOptions = {
+  attachTo: document.body,
+  global: {
+    stubs: { VDialog: VDialogStub },
+  },
+};
+
 const mountTeams = async () => {
-  const mounted = await mountWithPlugins(TeamList, {
-    attachTo: document.body,
-    global: {
-      stubs: { VDialog: VDialogStub },
-    },
+  const mounted = await mountWithPlugins(TeamList, mountOptions);
+  await flushPromises();
+  return mounted;
+};
+
+const mountTeam = async () => {
+  const router = await createTestRouter("/teams/1");
+  const mounted = await mountWithPlugins(Team, {
+    ...mountOptions,
+    router,
   });
   await flushPromises();
   return mounted;
@@ -258,24 +271,60 @@ describe("Feature 5 — Team Management", () => {
   });
 
   describe("US-5.4 — Manage team rows", () => {
-    it("team rows show edit and delete actions", async () => {
+    it("team rows open the team view and show a delete action", async () => {
       teamServices.getteams.mockResolvedValue({ data: [strikers] });
       const mounted = await mountTeams();
       wrapper = mounted.wrapper;
 
-      expect(wrapper.get('[aria-label="Edit team"]').exists()).toBe(true);
+      expect(wrapper.find("a").exists()).toBe(false);
+      expect(wrapper.get('[aria-label="Open team"]').exists()).toBe(true);
       expect(wrapper.get('[aria-label="Delete team"]').exists()).toBe(true);
+    });
+  });
+
+  describe("US-5.10 — View a team", () => {
+    it("User opens a team from the teams list", async () => {
+      teamServices.getteams.mockResolvedValue({ data: [strikers] });
+      const mounted = await mountTeams();
+      wrapper = mounted.wrapper;
+
+      await wrapper.get('[aria-label="Open team"]').trigger("click");
+      await flushPromises();
+
+      expect(mounted.router.currentRoute.value.name).toBe("team");
+      expect(mounted.router.currentRoute.value.params.teamId).toBe("1");
+    });
+
+    it("Team view shows team info and actions", async () => {
+      teamServices.getteams.mockResolvedValue({ data: [strikers] });
+      const mounted = await mountTeam();
+      wrapper = mounted.wrapper;
+
+      expect(wrapper.text()).toContain("OKC Strikers");
+      expect(wrapper.text()).toContain("OKC Youth Soccer");
+      expect(wrapper.text()).toContain("Edit team");
+      expect(wrapper.text()).toContain("Add Players");
+    });
+
+    it("Team view lists players with name, number, and position", async () => {
+      teamServices.getteams.mockResolvedValue({ data: [strikersWithJane] });
+      const mounted = await mountTeam();
+      wrapper = mounted.wrapper;
+
+      expect(wrapper.text()).toContain("Doe, Jane");
+      expect(wrapper.text()).toContain("10");
+      expect(wrapper.text()).toContain("Forward");
+      expect(wrapper.get('[aria-label="Edit player"]').exists()).toBe(true);
     });
   });
 
   describe("US-5.5 — Edit a team", () => {
     it("User selects to edit a team", async () => {
       teamServices.getteams.mockResolvedValue({ data: [strikers] });
-      const mounted = await mountTeams();
+      const mounted = await mountTeam();
       wrapper = mounted.wrapper;
 
-      await wrapper.get('[aria-label="Edit team"]').trigger("click");
-      await flushPromises();
+      await clickExactButton(wrapper, "Edit team");
 
       expect(wrapper.text()).toContain("Edit Team");
     });
@@ -287,11 +336,10 @@ describe("Feature 5 — Team Management", () => {
           data: [{ ...strikers, name: "OKC United" }],
         });
 
-      const mounted = await mountTeams();
+      const mounted = await mountTeam();
       wrapper = mounted.wrapper;
 
-      await wrapper.get('[aria-label="Edit team"]').trigger("click");
-      await flushPromises();
+      await clickExactButton(wrapper, "Edit team");
       await fillTeamForm(wrapper, { name: "OKC United" });
       await clickExactButton(wrapper, "Save Team");
 
@@ -302,11 +350,10 @@ describe("Feature 5 — Team Management", () => {
 
     it("User edits a team with invalid values and saves", async () => {
       teamServices.getteams.mockResolvedValue({ data: [strikers] });
-      const mounted = await mountTeams();
+      const mounted = await mountTeam();
       wrapper = mounted.wrapper;
 
-      await wrapper.get('[aria-label="Edit team"]').trigger("click");
-      await flushPromises();
+      await clickExactButton(wrapper, "Edit team");
       await fillTeamForm(wrapper, { name: "A".repeat(51) });
       await clickExactButton(wrapper, "Save Team");
 
@@ -317,11 +364,10 @@ describe("Feature 5 — Team Management", () => {
 
     it("User edits a team and cancels", async () => {
       teamServices.getteams.mockResolvedValue({ data: [strikers] });
-      const mounted = await mountTeams();
+      const mounted = await mountTeam();
       wrapper = mounted.wrapper;
 
-      await wrapper.get('[aria-label="Edit team"]').trigger("click");
-      await flushPromises();
+      await clickExactButton(wrapper, "Edit team");
       await fillTeamForm(wrapper, { name: "OKC United" });
       await clickExactButton(wrapper, "Cancel");
 
@@ -381,12 +427,10 @@ describe("Feature 5 — Team Management", () => {
         .mockResolvedValueOnce({ data: [strikers] })
         .mockResolvedValue({ data: [strikersWithJane] });
 
-      const mounted = await mountTeams();
+      const mounted = await mountTeam();
       wrapper = mounted.wrapper;
 
-      await wrapper.get('[aria-label="Edit team"]').trigger("click");
-      await flushPromises();
-      await clickExactButton(wrapper, "+ Add player");
+      await clickExactButton(wrapper, "Add Players");
       await fillPlayerForm(wrapper);
       await clickExactButton(wrapper, "Add");
 
@@ -395,17 +439,27 @@ describe("Feature 5 — Team Management", () => {
         position: "Forward",
         number: 10,
       });
-      expect(wrapper.text()).toContain("Doe");
+      expect(wrapper.text()).toContain("Doe, Jane");
+      expect(wrapper.text()).toContain("10");
+      expect(wrapper.text()).toContain("Forward");
+    });
+
+    it("User selects to add a player", async () => {
+      teamServices.getteams.mockResolvedValue({ data: [strikers] });
+      const mounted = await mountTeam();
+      wrapper = mounted.wrapper;
+
+      await clickExactButton(wrapper, "Add Players");
+
+      expect(wrapper.text()).toContain("Add Player");
     });
 
     it("User adds a player with a missing required field", async () => {
       teamServices.getteams.mockResolvedValue({ data: [strikers] });
-      const mounted = await mountTeams();
+      const mounted = await mountTeam();
       wrapper = mounted.wrapper;
 
-      await wrapper.get('[aria-label="Edit team"]').trigger("click");
-      await flushPromises();
-      await clickExactButton(wrapper, "+ Add player");
+      await clickExactButton(wrapper, "Add Players");
       await fillPlayerForm(wrapper, { position: "" });
       await clickExactButton(wrapper, "Add");
 
@@ -419,12 +473,10 @@ describe("Feature 5 — Team Management", () => {
         response: { data: { message: "Person is already on this team." } },
       });
 
-      const mounted = await mountTeams();
+      const mounted = await mountTeam();
       wrapper = mounted.wrapper;
 
-      await wrapper.get('[aria-label="Edit team"]').trigger("click");
-      await flushPromises();
-      await clickExactButton(wrapper, "+ Add player");
+      await clickExactButton(wrapper, "Add Players");
       await fillPlayerForm(wrapper);
       await clickExactButton(wrapper, "Add");
 
@@ -440,12 +492,10 @@ describe("Feature 5 — Team Management", () => {
         },
       });
 
-      const mounted = await mountTeams();
+      const mounted = await mountTeam();
       wrapper = mounted.wrapper;
 
-      await wrapper.get('[aria-label="Edit team"]').trigger("click");
-      await flushPromises();
-      await clickExactButton(wrapper, "+ Add player");
+      await clickExactButton(wrapper, "Add Players");
       await fillPlayerForm(wrapper, { personId: 2, number: 10 });
       await clickExactButton(wrapper, "Add");
 
@@ -453,6 +503,17 @@ describe("Feature 5 — Team Management", () => {
       expect(wrapper.text()).toContain(
         "Player number is already taken on this team."
       );
+    });
+
+    it("User selects to edit a player", async () => {
+      teamServices.getteams.mockResolvedValue({ data: [strikersWithJane] });
+      const mounted = await mountTeam();
+      wrapper = mounted.wrapper;
+
+      await wrapper.get('[aria-label="Edit player"]').trigger("click");
+      await flushPromises();
+
+      expect(wrapper.text()).toContain("Edit Player");
     });
 
     it("User edits a player with valid values and saves", async () => {
@@ -467,11 +528,9 @@ describe("Feature 5 — Team Management", () => {
           ],
         });
 
-      const mounted = await mountTeams();
+      const mounted = await mountTeam();
       wrapper = mounted.wrapper;
 
-      await wrapper.get('[aria-label="Edit team"]').trigger("click");
-      await flushPromises();
       await wrapper.get('[aria-label="Edit player"]').trigger("click");
       await flushPromises();
       await fillPlayerForm(wrapper, { position: "Midfield", number: 8 });
@@ -479,6 +538,7 @@ describe("Feature 5 — Team Management", () => {
 
       expect(teamServices.updateplayer).toHaveBeenCalled();
       expect(wrapper.text()).toContain("Midfield");
+      expect(wrapper.text()).toContain("8");
     });
 
     it("User removes a player from a team", async () => {
@@ -486,11 +546,9 @@ describe("Feature 5 — Team Management", () => {
         .mockResolvedValueOnce({ data: [strikersWithJane] })
         .mockResolvedValue({ data: [strikers] });
 
-      const mounted = await mountTeams();
+      const mounted = await mountTeam();
       wrapper = mounted.wrapper;
 
-      await wrapper.get('[aria-label="Edit team"]').trigger("click");
-      await flushPromises();
       await wrapper.get('[aria-label="Remove player"]').trigger("click");
       await flushPromises();
       await clickExactButton(wrapper, "Remove Player");
@@ -501,11 +559,8 @@ describe("Feature 5 — Team Management", () => {
 
     it("Team with no players shows empty roster", async () => {
       teamServices.getteams.mockResolvedValue({ data: [strikers] });
-      const mounted = await mountTeams();
+      const mounted = await mountTeam();
       wrapper = mounted.wrapper;
-
-      await wrapper.get('[aria-label="Edit team"]').trigger("click");
-      await flushPromises();
 
       expect(wrapper.text()).toContain("No players yet. Add the first player.");
     });

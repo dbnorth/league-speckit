@@ -11,7 +11,7 @@
 Constraints for the kit:
 
 1. **Teachable SDD** — students and Cursor agents must map Screen Requirements to a small, consistent set of files (`views/`, `components/`, `services/`).
-2. **Course-aligned stack** — OC CS materials and prior Vue coursework should transfer; avoid introducing a second major UI paradigm.
+2. **Speckit-aligned stack** — OC CS materials and prior Vue work should transfer; avoid introducing a second major UI paradigm.
 3. **Component UI library** — Speckit standardizes on **Vuetify 4** ([ADR-0005](./0005-vuetify-ui-library.md); see `ui-style-system.mdc`); the framework must integrate cleanly with that library.
 4. **SPA + Vite** — client-side routing, axios services, and Vitest + `@vue/test-utils` for Gherkin-backed UI tests.
 5. **Agent-friendly** — clear Options/Composition API patterns and a stable directory layout encoded in Cursor rules.
@@ -59,8 +59,8 @@ frontend/src/views/*.vue  ←── services/*Services.js  ←── axios ─�
 
 ### Negative / tradeoffs
 
-- Students who only know React must learn Vue idioms (or reverse for other courses).
-- Vue ecosystem choices (Composition vs Options API, pinia vs local state) still need course guidance — Speckit prefers patterns already in rules/specs, not every Vue plugin.
+- Students who only know React must learn Vue idioms (or reverse for other stacks).
+- Vue ecosystem choices (Composition vs Options API, pinia vs local state) still need project guidance — Speckit prefers patterns already in rules/specs, not every Vue plugin.
 - SSR / Nuxt is out of scope; SEO and first-paint for a public marketing site are not goals of this kit.
 
 ## Alternatives considered
@@ -69,7 +69,7 @@ frontend/src/views/*.vue  ←── services/*Services.js  ←── axios ─�
 |--------|---------|
 | **React + Vite** | Strong ecosystem, but breaks Vuetify-first UI rules and OC CS Vue continuity; would require rewriting frontend rules and starter shell. |
 | **Angular** | Heavier framework and tooling for a small Todo/SPA teaching kit; steeper curve for feature-by-feature SDD slices. |
-| **Svelte / Solid** | Excellent DX, but weaker match to course materials and Vuetify; fewer shared patterns in OC CS Speckit docs. |
+| **Svelte / Solid** | Excellent DX, but weaker match to Speckit materials and Vuetify; fewer shared patterns in OC CS Speckit docs. |
 | **Plain JS / jQuery SPA** | Insufficient structure for services layer, router guards, and Vitest component tests tied to Gherkin. |
 | **Nuxt / Vue SSR** | Extra deployment and auth complexity; ADR-0001 targets a Vite SPA talking to Express. |
 

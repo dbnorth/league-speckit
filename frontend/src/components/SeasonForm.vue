@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 
 const props = defineProps({
   modelValue: { type: Object, required: true },
+  leagues: { type: Array, default: () => [] },
 });
 
 const emit = defineEmits(["update:modelValue", "submit"]);
@@ -20,6 +21,7 @@ const nameRules = [
     (value?.trim() || "").length <= 30 ||
     "Season name must be 30 characters or fewer.",
 ];
+const leagueRules = [(value) => !!value || "Required"];
 const endDateRules = computed(() => [
   (value) => !!value || "Required",
   (value) =>
@@ -41,6 +43,16 @@ defineExpose({ validate });
       density="comfortable"
       :rules="nameRules"
       @update:model-value="updateField('name', $event)"
+    />
+    <v-select
+      :model-value="modelValue.leagueId"
+      label="League"
+      :items="leagues"
+      item-title="name"
+      item-value="id"
+      density="comfortable"
+      :rules="leagueRules"
+      @update:model-value="updateField('leagueId', $event)"
     />
     <v-text-field
       :model-value="modelValue.startDate"

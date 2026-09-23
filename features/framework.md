@@ -397,7 +397,7 @@ Once a feature has merged to `dev`, treat its spec as **released history** unles
 
 Before merging `feature/N-*` → `dev`:
 
-- [ ] **Spec** — Feature file matches what shipped (stories, **FR-00N**, **SC-00N**, Screen/courses-api-dbn/Data, Out of Scope).
+- [ ] **Spec** — Feature file matches what shipped (stories, **FR-00N**, **SC-00N**, Screen/API/Data, Out of Scope).
 - [ ] **Tests** — Every Gherkin scenario has a real `it`; Test Coverage Map complete; suites pass.
 - [ ] **Living reference** — Update in this PR when the integrated product changed: [reference/data-model.md](./reference/data-model.md) (schema), [reference/api.md](./reference/api.md) (routes/payloads), and/or [reference/behavior.md](./reference/behavior.md) (product rules). Required DoD — not optional cleanup.
 - [ ] **Catalog** — [features/README.md](./README.md) row for new features; ADR links if architecture changed.

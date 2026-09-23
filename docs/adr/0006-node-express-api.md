@@ -16,11 +16,11 @@ Constraints:
 4. **Classroom deploy** — long-running Node process + static SPA is simpler than a heavy application server for this kit.
 5. **ES modules** — `"type": "module"` throughout backend for consistency with modern Node and frontend tooling.
 
-Choosing Java/Spring, .NET, Python/Django, or PHP as the *primary* Speckit API would fork the monorepo story, Cursor rules, and test harness without improving SDD pedagogy for this course stack.
+Choosing Java/Spring, .NET, Python/Django, or PHP as the *primary* Speckit API would fork the monorepo story, Cursor rules, and test harness without improving SDD pedagogy for this stack.
 
 ## Decision
 
-Adopt **Node.js** (current LTS suitable for the course, e.g. 24+) with **Express 4** as the HTTP framework for OC CS Speckit APIs:
+Adopt **Node.js** (current LTS suitable for this project, e.g. 24+) with **Express 4** as the HTTP framework for OC CS Speckit APIs:
 
 | Concern | Choice |
 |---------|--------|
@@ -69,7 +69,7 @@ Vue SPA (ADR-0004)  ──JSON / Bearer──►  Express (this ADR)
 | Option | Why not |
 |--------|---------|
 | **Python + FastAPI / Django** | Excellent APIs, but splits language from Vue/Vite/Jest tooling and OC Speckit Node scripts. |
-| **Java + Spring Boot** | Strong enterprise fit; heavier local setup and mental model for feature-sized SDD slices in this course. |
+| **Java + Spring Boot** | Strong enterprise fit; heavier local setup and mental model for feature-sized SDD slices in this project. |
 | **PHP (Laravel / plain)** | Common on XAMPP hosts, but Speckit’s monorepo, Sequelize, and Jest harness are Node-first. |
 | **.NET / ASP.NET Core** | Viable REST stack; outside OC Speckit’s documented Vue + Node teaching path. |
 | **NestJS (Node)** | Structured, but more ceremony than Express for a small Todo API and starter overlay. |
