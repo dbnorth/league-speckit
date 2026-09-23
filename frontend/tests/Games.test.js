@@ -154,14 +154,14 @@ describe("Feature 6 — Game Management", () => {
         seasonId: 1,
         gameDate: "2026-09-12",
         startTime: "18:00",
-        location: "Memorial Field",
+        location: null,
         homeTeamId: 1,
         visitingTeamId: 2,
         homeTeamScore: null,
         visitingTeamScore: null,
       });
       expect(wrapper.find(".v-dialog-stub").exists()).toBe(false);
-      expect(wrapper.text()).toContain("Memorial Field");
+      expect(wrapper.text()).toContain("OKC Strikers");
     });
 
     it("User creates a game with a missing required field", async () => {
@@ -169,25 +169,11 @@ describe("Feature 6 — Game Management", () => {
       wrapper = mounted.wrapper;
 
       await clickButton(wrapper, "+ New game");
-      await fillGameForm(wrapper, { location: "" });
+      await fillGameForm(wrapper, { startTime: "" });
       await clickButton(wrapper, "Create");
 
       expect(gameServices.creategame).not.toHaveBeenCalled();
       expect(wrapper.text()).toContain("Required");
-    });
-
-    it("User creates a game with a location that is too long", async () => {
-      const mounted = await mountGames();
-      wrapper = mounted.wrapper;
-
-      await clickButton(wrapper, "+ New game");
-      await fillGameForm(wrapper, {
-        location: "Memorial Field Extra Long Location Name Here Now!!!",
-      });
-      await clickButton(wrapper, "Create");
-
-      expect(gameServices.creategame).not.toHaveBeenCalled();
-      expect(wrapper.text()).toContain("Location must be 50 characters or fewer.");
     });
   });
 

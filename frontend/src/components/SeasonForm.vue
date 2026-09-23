@@ -10,6 +10,16 @@ const emit = defineEmits(["update:modelValue", "submit"]);
 
 const formRef = ref(null);
 
+const weekdayOptions = [
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+];
+
 const updateField = (field, value) => {
   emit("update:modelValue", { ...props.modelValue, [field]: value });
 };
@@ -22,6 +32,20 @@ const nameRules = [
     "Season name must be 30 characters or fewer.",
 ];
 const leagueRules = [(value) => !!value || "Required"];
+const gameDaysRules = [
+  (value) => (Array.isArray(value) && value.length > 0) || "Required",
+];
+const minDaysRules = [
+  (value) =>
+    (value !== "" && value !== null && value !== undefined) || "Required",
+  (value) => {
+    const parsed = Number(value);
+    return (
+      (Number.isInteger(parsed) && parsed >= 0 && parsed <= 99) ||
+      "Minimum days between games must be between 0 and 99."
+    );
+  },
+];
 const endDateRules = computed(() => [
   (value) => !!value || "Required",
   (value) =>
@@ -69,6 +93,31 @@ defineExpose({ validate });
       density="comfortable"
       :rules="endDateRules"
       @update:model-value="updateField('endDate', $event)"
+    />
+    <v-select
+      :model-value="modelValue.gameDays"
+      label="Game Days"
+      :items="weekdayOptions"
+      multiple
+      density="comfortable"
+      :rules="gameDaysRules"
+      @update:model-value="updateField('gameDays', $event)"
+    />
+    <v-text-field
+      :model-value="modelValue.gameTime"
+      label="Game Time"
+      type="time"
+      density="comfortable"
+      :rules="requiredRule"
+      @update:model-value="updateField('gameTime', $event)"
+    />
+    <v-text-field
+      :model-value="modelValue.minDaysBetweenGames"
+      label="Minimum days between games"
+      type="number"
+      density="comfortable"
+      :rules="minDaysRules"
+      @update:model-value="updateField('minDaysBetweenGames', $event)"
     />
   </v-form>
 </template>

@@ -5,6 +5,7 @@ const props = defineProps({
   modelValue: { type: Object, required: true },
   seasons: { type: Array, default: () => [] },
   teams: { type: Array, default: () => [] },
+  showLocation: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(["update:modelValue", "submit"]);
@@ -17,9 +18,9 @@ const updateField = (field, value) => {
 
 const requiredRule = [(value) => !!value?.toString().trim() || "Required"];
 const locationRules = [
-  (value) => !!value?.trim() || "Required",
   (value) =>
-    (value?.trim().length ?? 0) <= 50 ||
+    !value?.trim() ||
+    value.trim().length <= 50 ||
     "Location must be 50 characters or fewer.",
 ];
 const selectRules = [(value) => !!value || "Required"];
@@ -71,6 +72,7 @@ defineExpose({ validate });
       @update:model-value="updateField('startTime', $event)"
     />
     <v-text-field
+      v-if="showLocation"
       :model-value="modelValue.location"
       label="Location"
       density="comfortable"

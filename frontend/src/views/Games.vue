@@ -126,7 +126,7 @@ const saveGame = async () => {
     seasonId: form.value.seasonId,
     gameDate: form.value.gameDate,
     startTime: form.value.startTime,
-    location: form.value.location.trim(),
+    location: isAddMode.value ? null : form.value.location.trim() || null,
     homeTeamId: form.value.homeTeamId,
     visitingTeamId: form.value.visitingTeamId,
     homeTeamScore: optionalScore(form.value.homeTeamScore),
@@ -272,6 +272,7 @@ onMounted(retrieveGames);
             v-model="form"
             :seasons="seasons"
             :teams="teams"
+            :show-location="!isAddMode"
             @submit="saveGame"
           />
           <v-alert v-if="formError" type="error" density="compact" class="mt-2">

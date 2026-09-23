@@ -12,14 +12,41 @@ export default (sequelize, Sequelize) => {
         allowNull: false,
       },
       startDate: {
-        type: Sequelize.DATE,
+        type: Sequelize.DATEONLY,
         allowNull: false,
       },
       endDate: {
-        type: Sequelize.DATE,
+        type: Sequelize.DATEONLY,
         allowNull: false,
       },
       leagueId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
+      gameDays: {
+        type: Sequelize.JSON,
+        allowNull: false,
+        get() {
+          const value = this.getDataValue("gameDays");
+          if (Array.isArray(value)) {
+            return value;
+          }
+          if (typeof value === "string") {
+            try {
+              const parsed = JSON.parse(value);
+              return Array.isArray(parsed) ? parsed : [];
+            } catch {
+              return [];
+            }
+          }
+          return [];
+        },
+      },
+      gameTime: {
+        type: Sequelize.TIME,
+        allowNull: false,
+      },
+      minDaysBetweenGames: {
         type: Sequelize.INTEGER,
         allowNull: false,
       },

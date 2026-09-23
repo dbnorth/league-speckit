@@ -16,6 +16,10 @@ const seasonServices = {
   deleteseason(seasonId) {
     return apiClient.delete(`seasons/${seasonId}`);
   },
+
+  creategames(seasonId) {
+    return apiClient.post(`seasons/${seasonId}/games`);
+  },
 };
 
 export default seasonServices;

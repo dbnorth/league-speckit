@@ -64,14 +64,18 @@ const validateGameFields = async ({
     parsedSeasonId === null ||
     !gameDate ||
     !startTime ||
-    !location?.toString().trim() ||
     parsedHomeTeamId === null ||
     parsedVisitingTeamId === null
   ) {
     return { error: { status: 400, message: "Required" } };
   }
 
-  if (location.trim().length > 50) {
+  const trimmedLocation =
+    location === undefined || location === null || !String(location).trim()
+      ? null
+      : String(location).trim();
+
+  if (trimmedLocation && trimmedLocation.length > 50) {
     return {
       error: { status: 400, message: "Location must be 50 characters or fewer." },
     };
@@ -138,7 +142,7 @@ const validateGameFields = async ({
       seasonId: parsedSeasonId,
       gameDate,
       startTime,
-      location: location.trim(),
+      location: trimmedLocation,
       homeTeamId: parsedHomeTeamId,
       visitingTeamId: parsedVisitingTeamId,
       homeTeamScore: homeScore.value,

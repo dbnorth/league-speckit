@@ -32,7 +32,7 @@ describe("Feature 6 — Game Management", () => {
       expect(response.body.season.name).toBe("2026 Fall");
       expect(response.body.homeTeam.name).toBe("OKC Strikers");
       expect(response.body.visitingTeam.name).toBe("Tulsa FC");
-      expect(response.body.location).toBe("Memorial Field");
+      expect(response.body.location).toBeNull();
     });
 
     it("User creates a game with the same home and visiting team", async () => {
@@ -148,7 +148,7 @@ describe("Feature 6 — Game Management", () => {
       expect(response.body).toHaveLength(2);
       expect(response.body.map((row) => row.location)).toEqual([
         "North Field",
-        "Memorial Field",
+        null,
       ]);
     });
   });
@@ -165,7 +165,7 @@ describe("Feature 6 — Game Management", () => {
           seasonId: created.body.seasonId,
           gameDate: "2026-09-13",
           startTime: "19:00",
-          location: "Memorial Field",
+          location: "North Field",
           homeTeamId: created.body.homeTeamId,
           visitingTeamId: created.body.visitingTeamId,
           homeTeamScore: 2,
@@ -178,6 +178,7 @@ describe("Feature 6 — Game Management", () => {
       expect(stored.homeTeamScore).toBe(2);
       expect(stored.visitingTeamScore).toBe(1);
       expect(stored.gameDate).toBe("2026-09-13");
+      expect(stored.location).toBe("North Field");
     });
   });
 
