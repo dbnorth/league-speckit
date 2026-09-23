@@ -10,6 +10,7 @@ import {
   syncTestDatabase,
   validRegisterPayload,
   registerUser,
+  registerAdmin,
   loginUser,
   authHeader,
 } from "./helpers.js";
@@ -29,7 +30,7 @@ describe("Feature 1 — User Authentication & Session Management", () => {
         email: "jane@example.com",
         fName: "Jane",
         lName: "Doe",
-        role: "student",
+        role: "manager",
       });
       expect(response.body.userId).toEqual(expect.any(Number));
       expect(response.body.token).toEqual(expect.any(String));
@@ -106,7 +107,7 @@ describe("Feature 1 — User Authentication & Session Management", () => {
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
         username: "jdoe",
-        role: "student",
+        role: "manager",
       });
       expect(response.body.userId).toEqual(expect.any(Number));
       expect(response.body.token).toEqual(expect.any(String));
@@ -163,6 +164,81 @@ describe("Feature 1 — User Authentication & Session Management", () => {
         .set(authHeader(token));
 
       expect(protectedResponse.status).toBe(401);
+    });
+  });
+
+  describe("US-9.3 — Default new-user role is manager", () => {
+    it("User registers with role manager", async () => {
+      const { response } = await registerUser(app);
+
+      expect(response.status).toBe(201);
+      expect(response.body.role).toBe("manager");
+      const stored = await db.user.findOne({ where: { username: "jdoe" } });
+      expect(stored.role).toBe("manager");
+    });
+  });
+
+  describe("US-9.4 — Connect a new user to a person with the same email", () => {
+    it("User registers and links to a person with the same email", async () => {
+      const { token } = await registerAdmin(app);
+      await request(app)
+        .post("/league/people")
+        .set(authHeader(token))
+        .send({
+          firstName: "Jane",
+          lastName: "Doe",
+          email: "jane.doe@example.com",
+          birthDate: "1990-05-15",
+          gender: "female",
+        });
+
+      const { response } = await registerUser(app, {
+        username: "janedoe",
+        email: "jane.doe@example.com",
+      });
+
+      expect(response.status).toBe(201);
+      const person = await db.person.findOne({
+        where: { email: "jane.doe@example.com" },
+      });
+      expect(person.userId).toBe(response.body.userId);
+    });
+
+    it("User registers when no person has that email", async () => {
+      const { response } = await registerUser(app, {
+        username: "newuser",
+        email: "new.user@example.com",
+      });
+
+      expect(response.status).toBe(201);
+      expect(await db.person.count()).toBe(0);
+    });
+
+    it("User registers when the matching person is already linked", async () => {
+      const { token, userId } = await registerAdmin(app);
+      const personResponse = await request(app)
+        .post("/league/people")
+        .set(authHeader(token))
+        .send({
+          firstName: "Jane",
+          lastName: "Doe",
+          email: "jane.doe@example.com",
+          birthDate: "1990-05-15",
+          gender: "female",
+        });
+      await db.person.update(
+        { userId },
+        { where: { id: personResponse.body.id } }
+      );
+
+      const { response } = await registerUser(app, {
+        username: "janedoe",
+        email: "jane.doe@example.com",
+      });
+
+      expect(response.status).toBe(201);
+      const person = await db.person.findByPk(personResponse.body.id);
+      expect(person.userId).toBe(userId);
     });
   });
 });

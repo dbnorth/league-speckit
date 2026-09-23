@@ -1,6 +1,6 @@
 # API Reference
 
-**Status:** Feature 8 create-season-games. Mount path is `/league` (see `backend/server.js`).
+**Status:** Feature 9 team-manager. Mount path is `/league` (see `backend/server.js`).
 
 ## Endpoints
 
@@ -20,7 +20,7 @@
 | `PUT`    | `/league/people/:personId`  | Yes, admin | Update a person                         |
 | `DELETE` | `/league/people/:personId`  | Yes, admin | Delete a person                         |
 | `GET`    | `/league/users`             | Yes, admin | List users for the optional person link |
-| `GET`    | `/league/teams`             | Yes        | Fetch all teams with league and players |
+| `GET`    | `/league/teams`             | Yes        | Fetch teams (all for admin/student; manager sees only their teams) |
 | `POST`   | `/league/teams`             | Yes, admin | Create a team in a league               |
 | `PUT`    | `/league/teams/:teamId`     | Yes, admin | Update a team's name or league          |
 | `DELETE` | `/league/teams/:teamId`     | Yes, admin | Delete a team and its player rows       |
@@ -73,9 +73,10 @@ Do not send `id` on create. League `userId` is ignored. Person `userId` is an op
 }
 ```
 
-`userId` MAY be omitted or `null`. Sending `null` on update unlinks the user.
+`userId` MAY be omitted or `null`. Sending `null` on update unlinks the user. Linked user email MUST match the person email.
 
-**Team create / update body:** `{ "name": "OKC Strikers", "leagueId": 1, "homeField": "Memorial Field" }`  
+**Team create / update body:** `{ "name": "OKC Strikers", "leagueId": 1, "homeField": "Memorial Field", "managerId": 1 }`  
+`managerId` MAY be omitted or `null`. Team responses include nested `manager` `{ "id", "firstName", "lastName" }` or `null`.  
 **Player create / update body:** `{ "personId": 1, "position": "Forward", "number": 10 }`  
 **Game create / update body:**
 
@@ -94,11 +95,11 @@ Do not send `id` on create. League `userId` is ignored. Person `userId` is an op
 
 Scores MAY be omitted or `null`.
 
-**Success create (`201`):** object with `id`, timestamps, and feature fields. Seasons include nested `league`. Teams include nested `league` and `players`. Games include nested `season`, `homeTeam`, and `visitingTeam`.  
+**Success create (`201`):** object with `id`, timestamps, and feature fields. Seasons include nested `league`. Teams include nested `league`, `manager`, and `players`. Games include nested `season`, `homeTeam`, and `visitingTeam`. Register returns `role` `manager` and may set `people.userId` when emails match.  
 **Success list (`200`):** array of objects. Seasons ordered by `startDate` ascending. Leagues ordered by `name` ascending. People ordered by `lastName`, then `firstName`. Teams ordered by league `name`, then team `name`. Players on a team ordered by `number`. Games ordered by `gameDate`, then `startTime`.  
 **User list (`200`):** array of `{ "id", "username", "fName", "lName" }` (no password).  
 **Errors:** `{ "message": "..." }`. Missing row → `404`. Validation / missing parent / blocked delete → `400`. Unauthenticated → `401`. Non-admin write (and `GET /league/users`) → `403` `{ "message": "Admin role required." }`.  
-**Blocked deletes:** `DELETE` league with seasons → `"Cannot delete league: seasons still exist."` `DELETE` league with teams → `"Cannot delete league: teams still exist."` `DELETE` person on a roster → `"Cannot delete person: team roster still exists."` `DELETE` season with games → `"Cannot delete season: games still exist."` `DELETE` team with games → `"Cannot delete team: games still exist."`
+**Blocked deletes:** `DELETE` league with seasons → `"Cannot delete league: seasons still exist."` `DELETE` league with teams → `"Cannot delete league: teams still exist."` `DELETE` person on a roster → `"Cannot delete person: team roster still exists."` `DELETE` person who is a team manager → `"Cannot delete person: team manager still exists."` `DELETE` season with games → `"Cannot delete season: games still exist."` `DELETE` team with games → `"Cannot delete team: games still exist."`
 
 ## Conventions
 

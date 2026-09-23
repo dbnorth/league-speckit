@@ -78,6 +78,17 @@ db.player.belongsTo(db.person, {
   onDelete: "RESTRICT",
 });
 
+db.team.belongsTo(db.person, {
+  foreignKey: "managerId",
+  as: "manager",
+  onDelete: "RESTRICT",
+});
+
+db.person.hasMany(db.team, {
+  foreignKey: "managerId",
+  as: "managedTeams",
+});
+
 db.team.hasMany(db.player, {
   foreignKey: "teamId",
   as: "players",

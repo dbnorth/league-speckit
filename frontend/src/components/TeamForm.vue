@@ -1,9 +1,10 @@
 <script setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 
 const props = defineProps({
   modelValue: { type: Object, required: true },
   leagues: { type: Array, default: () => [] },
+  people: { type: Array, default: () => [] },
 });
 
 const emit = defineEmits(["update:modelValue", "submit"]);
@@ -13,6 +14,13 @@ const formRef = ref(null);
 const updateField = (field, value) => {
   emit("update:modelValue", { ...props.modelValue, [field]: value });
 };
+
+const personItems = computed(() =>
+  props.people.map((person) => ({
+    ...person,
+    title: `${person.lastName}, ${person.firstName}`,
+  }))
+);
 
 const nameRules = [
   (value) => !!value?.trim() || "Required",
@@ -58,6 +66,16 @@ defineExpose({ validate });
       density="comfortable"
       :rules="homeFieldRules"
       @update:model-value="updateField('homeField', $event)"
+    />
+    <v-select
+      :model-value="modelValue.managerId"
+      label="Manager"
+      :items="personItems"
+      item-title="title"
+      item-value="id"
+      density="comfortable"
+      clearable
+      @update:model-value="updateField('managerId', $event)"
     />
   </v-form>
 </template>

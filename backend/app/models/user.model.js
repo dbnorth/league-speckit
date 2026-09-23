@@ -32,7 +32,7 @@ export default (sequelize, Sequelize) => {
       role: {
         type: Sequelize.STRING(20),
         allowNull: false,
-        defaultValue: "student",
+        defaultValue: "manager",
       },
     },
     {

@@ -9,8 +9,8 @@ router.post("/", [authenticateAdmin], teamController.create);
 router.put("/:teamId", [authenticateAdmin], teamController.update);
 router.delete("/:teamId", [authenticateAdmin], teamController.remove);
 router.get("/:teamId/players", [authenticate], teamController.findPlayers);
-router.post("/:teamId/players", [authenticateAdmin], teamController.createPlayer);
-router.put("/:teamId/players/:playerId", [authenticateAdmin], teamController.updatePlayer);
-router.delete("/:teamId/players/:playerId", [authenticateAdmin], teamController.removePlayer);
+router.post("/:teamId/players", [authenticate], teamController.createPlayer);
+router.put("/:teamId/players/:playerId", [authenticate], teamController.updatePlayer);
+router.delete("/:teamId/players/:playerId", [authenticate], teamController.removePlayer);
 
 export default router;

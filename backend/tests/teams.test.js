@@ -159,6 +159,9 @@ describe("Feature 5 — Team Management", () => {
         username: "student1",
         email: "student1@example.com",
       });
+      const studentUser = await db.user.findByPk(student.body.userId);
+      studentUser.role = "student";
+      await studentUser.save();
 
       const response = await request(app)
         .get("/league/teams")
@@ -389,6 +392,280 @@ describe("Feature 5 — Team Management", () => {
       });
       expect(await db.person.findByPk(person.body.id)).not.toBeNull();
       expect(await db.player.findByPk(player.body.id)).not.toBeNull();
+    });
+  });
+
+  describe("US-9.1 — Assign a team manager", () => {
+    it("User creates a team with a manager", async () => {
+      const { token } = await registerAdmin(app);
+      const league = await createLeague(app, token);
+      const person = await createPerson(app, token);
+      const response = await createTeam(app, token, {
+        leagueId: league.body.id,
+        managerId: person.body.id,
+      });
+
+      expect(response.status).toBe(201);
+      expect(response.body.managerId).toBe(person.body.id);
+      expect(response.body.manager.lastName).toBe("Doe");
+    });
+
+    it("User creates a team without a manager", async () => {
+      const { token } = await registerAdmin(app);
+      const league = await createLeague(app, token);
+      const response = await createTeam(app, token, { leagueId: league.body.id });
+
+      expect(response.status).toBe(201);
+      expect(response.body.managerId).toBeNull();
+      expect(response.body.manager).toBeNull();
+    });
+
+    it("User creates a team with an unknown manager", async () => {
+      const { token } = await registerAdmin(app);
+      const league = await createLeague(app, token);
+      const response = await createTeam(app, token, {
+        leagueId: league.body.id,
+        managerId: 9999,
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({ message: "Person not found." });
+      expect(await db.team.count()).toBe(0);
+    });
+
+    it("User edits a team manager and saves", async () => {
+      const { token } = await registerAdmin(app);
+      const league = await createLeague(app, token);
+      const first = await createPerson(app, token);
+      const second = await createPerson(app, token, {
+        firstName: "Robert",
+        lastName: "Smith",
+        email: "robert.smith@example.com",
+        gender: "male",
+      });
+      const team = await createTeam(app, token, {
+        leagueId: league.body.id,
+        managerId: first.body.id,
+      });
+
+      const response = await request(app)
+        .put(`/league/teams/${team.body.id}`)
+        .set(authHeader(token))
+        .send({
+          ...validTeam({ leagueId: league.body.id, managerId: second.body.id }),
+        });
+
+      expect(response.status).toBe(200);
+      const stored = await db.team.findByPk(team.body.id);
+      expect(stored.managerId).toBe(second.body.id);
+    });
+
+    it("User clears a team manager and saves", async () => {
+      const { token } = await registerAdmin(app);
+      const league = await createLeague(app, token);
+      const person = await createPerson(app, token);
+      const team = await createTeam(app, token, {
+        leagueId: league.body.id,
+        managerId: person.body.id,
+      });
+
+      const response = await request(app)
+        .put(`/league/teams/${team.body.id}`)
+        .set(authHeader(token))
+        .send(validTeam({ leagueId: league.body.id, managerId: null }));
+
+      expect(response.status).toBe(200);
+      const stored = await db.team.findByPk(team.body.id);
+      expect(stored.managerId).toBeNull();
+    });
+  });
+
+  describe("US-9.5 — Block delete of a person who manages a team", () => {
+    it("User cannot delete a person who is a team manager", async () => {
+      const { token } = await registerAdmin(app);
+      const league = await createLeague(app, token);
+      const person = await createPerson(app, token);
+      const team = await createTeam(app, token, {
+        leagueId: league.body.id,
+        managerId: person.body.id,
+      });
+
+      const response = await request(app)
+        .delete(`/league/people/${person.body.id}`)
+        .set(authHeader(token));
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: "Cannot delete person: team manager still exists.",
+      });
+      expect(await db.person.findByPk(person.body.id)).not.toBeNull();
+      expect(await db.team.findByPk(team.body.id)).not.toBeNull();
+    });
+  });
+
+  describe("US-9.6 — Manager sees only their teams", () => {
+    it("Manager can list only the teams they manage via the API", async () => {
+      const { token: adminToken } = await registerAdmin(app);
+      const { response: manager } = await registerUser(app, {
+        username: "janedoe",
+        email: "jane.doe@example.com",
+      });
+      const league = await createLeague(app, adminToken);
+      const person = await createPerson(app, adminToken, {
+        userId: manager.body.userId,
+      });
+      await createTeam(app, adminToken, {
+        leagueId: league.body.id,
+        name: "OKC Strikers",
+        managerId: person.body.id,
+      });
+      await createTeam(app, adminToken, {
+        leagueId: league.body.id,
+        name: "Tulsa FC",
+      });
+
+      const response = await request(app)
+        .get("/league/teams")
+        .set(authHeader(manager.body.token));
+
+      expect(response.status).toBe(200);
+      expect(response.body.map((team) => team.name)).toEqual(["OKC Strikers"]);
+    });
+
+    it("Manager with no linked person sees no teams", async () => {
+      const { token: adminToken } = await registerAdmin(app);
+      const { response: manager } = await registerUser(app, {
+        username: "janedoe",
+        email: "jane.doe@example.com",
+      });
+      const league = await createLeague(app, adminToken);
+      await createTeam(app, adminToken, { leagueId: league.body.id });
+
+      const response = await request(app)
+        .get("/league/teams")
+        .set(authHeader(manager.body.token));
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([]);
+    });
+
+    it("Manager adds a player to a team they manage", async () => {
+      const { token: adminToken } = await registerAdmin(app);
+      const { response: manager } = await registerUser(app, {
+        username: "janedoe",
+        email: "jane.doe@example.com",
+      });
+      const league = await createLeague(app, adminToken);
+      const managerPerson = await createPerson(app, adminToken, {
+        userId: manager.body.userId,
+      });
+      const playerPerson = await createPerson(app, adminToken, {
+        firstName: "Robert",
+        lastName: "Smith",
+        email: "robert.smith@example.com",
+        gender: "male",
+      });
+      const team = await createTeam(app, adminToken, {
+        leagueId: league.body.id,
+        managerId: managerPerson.body.id,
+      });
+
+      const response = await createPlayer(app, manager.body.token, team.body.id, {
+        personId: playerPerson.body.id,
+      });
+
+      expect(response.status).toBe(201);
+      expect(response.body.personId).toBe(playerPerson.body.id);
+    });
+
+    it("Manager edits a player on a team they manage", async () => {
+      const { token: adminToken } = await registerAdmin(app);
+      const { response: manager } = await registerUser(app, {
+        username: "janedoe",
+        email: "jane.doe@example.com",
+      });
+      const league = await createLeague(app, adminToken);
+      const managerPerson = await createPerson(app, adminToken, {
+        userId: manager.body.userId,
+      });
+      const playerPerson = await createPerson(app, adminToken, {
+        firstName: "Robert",
+        lastName: "Smith",
+        email: "robert.smith@example.com",
+        gender: "male",
+      });
+      const team = await createTeam(app, adminToken, {
+        leagueId: league.body.id,
+        managerId: managerPerson.body.id,
+      });
+      const player = await createPlayer(app, manager.body.token, team.body.id, {
+        personId: playerPerson.body.id,
+      });
+
+      const response = await request(app)
+        .put(`/league/teams/${team.body.id}/players/${player.body.id}`)
+        .set(authHeader(manager.body.token))
+        .send({
+          personId: playerPerson.body.id,
+          position: "Midfield",
+          number: 8,
+        });
+
+      expect(response.status).toBe(200);
+      const stored = await db.player.findByPk(player.body.id);
+      expect(stored.position).toBe("Midfield");
+      expect(stored.number).toBe(8);
+    });
+
+    it("Manager removes a player from a team they manage", async () => {
+      const { token: adminToken } = await registerAdmin(app);
+      const { response: manager } = await registerUser(app, {
+        username: "janedoe",
+        email: "jane.doe@example.com",
+      });
+      const league = await createLeague(app, adminToken);
+      const managerPerson = await createPerson(app, adminToken, {
+        userId: manager.body.userId,
+      });
+      const playerPerson = await createPerson(app, adminToken, {
+        firstName: "Robert",
+        lastName: "Smith",
+        email: "robert.smith@example.com",
+        gender: "male",
+      });
+      const team = await createTeam(app, adminToken, {
+        leagueId: league.body.id,
+        managerId: managerPerson.body.id,
+      });
+      const player = await createPlayer(app, manager.body.token, team.body.id, {
+        personId: playerPerson.body.id,
+      });
+
+      const response = await request(app)
+        .delete(`/league/teams/${team.body.id}/players/${player.body.id}`)
+        .set(authHeader(manager.body.token));
+
+      expect(response.status).toBe(200);
+      expect(await db.player.findByPk(player.body.id)).toBeNull();
+    });
+
+    it("Manager cannot add a player to a team they do not manage", async () => {
+      const { token: adminToken } = await registerAdmin(app);
+      const { response: manager } = await registerUser(app, {
+        username: "janedoe",
+        email: "jane.doe@example.com",
+      });
+      const league = await createLeague(app, adminToken);
+      const person = await createPerson(app, adminToken);
+      const team = await createTeam(app, adminToken, { leagueId: league.body.id });
+
+      const response = await createPlayer(app, manager.body.token, team.body.id, {
+        personId: person.body.id,
+      });
+
+      expect(response.status).toBe(403);
+      expect(response.body).toEqual({ message: "Admin role required." });
+      expect(await db.player.count()).toBe(0);
     });
   });
 });

@@ -67,8 +67,9 @@ export function epicRef(featureNum) {
 
 export function parseUserStories(content) {
   const stories = [];
+  // Allow a blank line after the heading (standard markdown in feature specs).
   const storyRegex =
-    /### US-\d+\.(\d+): ([^\n]+)\n\*\*As (?:a|the)\*\* ([^\n]+)\n\*\*I want(?: to)?\*\* ([^\n]+)\n\*\*So that\*\* ([^\n]+)/g;
+    /### US-\d+\.(\d+):\s*([^\n]+)\r?\n+\*\*As (?:a|the)\*\*\s*([^\n]+)\r?\n\*\*I want(?: to)?\*\*\s*([^\n]+)\r?\n\*\*So that\*\*\s*([^\n]+)/g;
 
   let match;
   while ((match = storyRegex.exec(content)) !== null) {

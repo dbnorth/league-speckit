@@ -97,17 +97,17 @@
 - **FR-010**: `email` MUST be required, unique, trimmed, at most 100 characters, and a valid email address. Invalid format message: **"Email must be a valid email address."** Too-long message: **"Email must be 100 characters or fewer."** Duplicate message: **"Email is already taken."**
 - **FR-011**: `birthDate` MUST be required and MUST be a date in the past. Future or same-as-today date message: **"Birth date must be in the past."**
 - **FR-012**: `gender` MUST be required and MUST be one of `male`, `female`, `other`. The UI MUST present these as a single-select dropdown. Empty selection is invalid. Values outside that list are invalid. Invalid message: **"Gender must be male, female, or other."**
-- **FR-013**: `userId` is **optional**. When omitted or `null`, the person has no login account. When present, it MUST be an integer that exists in `users`. Missing user message: **"User not found."** A given `users.id` MUST be linked to at most one person. Duplicate-link message: **"User is already linked to a person."** Creating or deleting a person MUST NOT create or delete a Feature 1 user.
+- **FR-013**: `userId` is **optional**. When omitted or `null`, the person has no login account. When present, it MUST be an integer that exists in `users`, and that user's email MUST match the person's email (trimmed, case-insensitive). Missing user message: **"User not found."** Mismatch message: **"User email must match the person's email."** A given `users.id` MUST be linked to at most one person. Duplicate-link message: **"User is already linked to a person."** Creating or deleting a person MUST NOT create or delete a Feature 1 user. [Feature 9](feature-9-team-manager.md) also auto-links on register when emails match.
 
 ---
 
 ## Assumptions
 
 - Features 1–3 (auth/`MenuBar`, seasons, leagues) MUST be merged to `dev` before implementing this feature.
-- A user with role `admin` exists (Feature 1 `role`; tests may seed an admin). Feature 1 default register role may be `worker`/`student` — not sufficient for this UI.
+- A user with role `admin` exists (Feature 1 `role`; tests may seed an admin). Feature 1 default register role is `manager` (Feature 9) — not sufficient for this UI.
 - People are a shared catalog. **Depends on Features 2–3** is for `MenuBar` (**Seasons** and **Leagues** already present). No FK from `people` to `seasons` or `leagues` in this feature.
 - A person **may** have one Feature 1 user (`userId`). A person with no user is valid. Linking is optional on create and edit. This feature does **not** register login accounts.
-- Person `email` uniqueness is only on `people`. A linked user's `users.email` MAY differ from the person's `email`.
+- Person `email` uniqueness is only on `people`. A linked user's `users.email` MUST match the person's `email` (Feature 9).
 - `gender` is a closed list (`male`, `female`, `other`), not free text.
 - People use **dialog-based** workflows (no split sidebar / main panel).
 - API mount for this resource is `/league/…`. Use `/league/people`.
@@ -126,6 +126,7 @@
 - `userId` omitted → person is stored with no linked user.
 - Unknown `userId` → `400` with `{ "message": "User not found." }`
 - `userId` already linked to another person → `400` with `{ "message": "User is already linked to a person." }`
+- `userId` whose email does not match the person → `400` with `{ "message": "User email must match the person's email." }` (Feature 9)
 - Unknown `personId` on PUT/DELETE → `404` with `{ "message": "Person with id=<id> not found." }`
 - Delete person that has a linked user → person row is deleted; the Feature 1 user remains.
 - Authenticated `student` (or any non-admin) on `POST` / `PUT` / `DELETE` or `GET /league/users` → `403`.

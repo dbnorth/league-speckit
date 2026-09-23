@@ -19,6 +19,10 @@ export default (sequelize, Sequelize) => {
         type: Sequelize.STRING(50),
         allowNull: true,
       },
+      managerId: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      },
     },
     {
       indexes: [{ unique: true, fields: ["leagueId", "name"] }],

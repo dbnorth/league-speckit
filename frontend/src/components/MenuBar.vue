@@ -168,7 +168,7 @@ const handleLogout = async () => {
       Leagues
     </v-btn>
     <v-btn
-      v-if="user?.role === 'admin'"
+      v-if="user?.role === 'admin' || user?.role === 'manager'"
       variant="text"
       color="white"
       to="/teams"

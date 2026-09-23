@@ -68,7 +68,10 @@ const validatePersonFields = ({ firstName, lastName, email, birthDate, gender })
   return null;
 };
 
-const resolveUserLink = async (userId, personId) => {
+const emailsMatch = (left, right) =>
+  String(left ?? "").trim().toLowerCase() === String(right ?? "").trim().toLowerCase();
+
+const resolveUserLink = async (userId, personId, personEmail) => {
   const normalized = normalizeUserId(userId);
   if (Number.isNaN(normalized)) {
     return { error: { message: "User not found." } };
@@ -86,6 +89,10 @@ const resolveUserLink = async (userId, personId) => {
   const linked = await db.person.findOne({ where: { userId: normalized } });
   if (linked && linked.id !== personId) {
     return { error: { message: "User is already linked to a person." } };
+  }
+
+  if (!emailsMatch(user.email, personEmail)) {
+    return { error: { message: "User email must match the person's email." } };
   }
 
   return { userId: normalized };
@@ -129,7 +136,7 @@ exports.create = async (req, res) => {
       return res.status(400).send({ message: "Email is already taken." });
     }
 
-    const link = await resolveUserLink(userId, null);
+    const link = await resolveUserLink(userId, null, email.trim());
     if (link.error) {
       return res.status(400).send(link.error);
     }
@@ -188,7 +195,7 @@ exports.update = async (req, res) => {
       return res.status(400).send({ message: "Email is already taken." });
     }
 
-    const link = await resolveUserLink(userId, personId);
+    const link = await resolveUserLink(userId, personId, email.trim());
     if (link.error) {
       return res.status(400).send(link.error);
     }
@@ -223,6 +230,13 @@ exports.remove = async (req, res) => {
     if (!existing) {
       return res.status(404).send({
         message: `Person with id=${personId} not found.`,
+      });
+    }
+
+    const managerCount = await db.team.count({ where: { managerId: personId } });
+    if (managerCount > 0) {
+      return res.status(400).send({
+        message: "Cannot delete person: team manager still exists.",
       });
     }
 

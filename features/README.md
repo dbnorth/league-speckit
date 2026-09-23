@@ -25,6 +25,7 @@ No application code may be written unless it maps to a requirement in one of the
 | 6 | [Game Management](feature-6-game-management.md) | `feature/6-game-management` | Features 1, 2, 3, 5 |
 | 7 | [Season View](feature-7-season-view.md) | `feature/7-season-view` | Features 1, 2, 5, 6 |
 | 8 | [Create Season Games](feature-8-create-season-games.md) | `feature/8-create-season-games` | Features 1, 2, 5, 6, 7 |
+| 9 | [Team Manager](feature-9-team-manager.md) | `feature/9-team-manager` | Features 1, 4, 5 |
 
 New features: follow [framework.md](./framework.md#feature-spec-template) — **Status**, **Input**, **FR-00N**, **SC-00N**, **Key Entities**, Gherkin, **Agent implementation request**, **Definition of Done**.
 

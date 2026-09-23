@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { flushPromises } from "@vue/test-utils";
 import Register from "../src/views/Register.vue";
 import authServices from "../src/services/authServices.js";
+import Utils from "../src/config/utils.js";
 import { mountWithPlugins, createTestRouter } from "./testUtils.js";
 
 vi.mock("../src/services/authServices.js", () => ({
@@ -114,6 +115,34 @@ describe("Feature 1 — User Authentication & Session Management", () => {
 
       expect(authServices.registerUser).not.toHaveBeenCalled();
       expect(wrapper.text()).toContain("Passwords do not match.");
+    });
+  });
+
+  describe("US-9.3 — Default new-user role is manager", () => {
+    it("User registers with role manager", async () => {
+      const router = await createTestRouter("/register");
+      authServices.registerUser.mockResolvedValue({
+        data: {
+          userId: 1,
+          username: "jdoe",
+          email: "jane@example.com",
+          fName: "Jane",
+          lName: "Doe",
+          role: "manager",
+          token: "token",
+        },
+      });
+
+      ({ wrapper } = await mountWithPlugins(Register, {
+        router,
+        attachTo: document.body,
+      }));
+
+      await fillRegisterForm(wrapper);
+      await submitForm(wrapper);
+
+      expect(authServices.registerUser).toHaveBeenCalled();
+      expect(Utils.getStore("user").role).toBe("manager");
     });
   });
 });
