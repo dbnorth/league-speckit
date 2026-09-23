@@ -23,7 +23,7 @@ describe("Feature 1 — User Authentication & Session Management", () => {
       await stored.save();
 
       const response = await request(app)
-        .get(`/courses/users/${registerResponse.body.userId}`)
+        .get(`/league/users/${registerResponse.body.userId}`)
         .set(authHeader(registerResponse.body.token));
 
       expect(response.status).toBe(200);
@@ -47,7 +47,7 @@ describe("Feature 1 — User Authentication & Session Management", () => {
       );
 
       const response = await request(app)
-        .get(`/courses/users/${registerResponse.body.userId}`)
+        .get(`/league/users/${registerResponse.body.userId}`)
         .set(authHeader(registerResponse.body.token));
 
       expect(response.status).toBe(401);
@@ -57,7 +57,7 @@ describe("Feature 1 — User Authentication & Session Management", () => {
 
   describe("US-1.5 — Block unauthenticated access", () => {
     it("Unauthenticated user accesses a protected route", async () => {
-      const response = await request(app).get("/courses/users/1");
+      const response = await request(app).get("/league/users/1");
 
       expect(response.status).toBe(401);
       expect(response.body.message).toMatch(/Unauthorized/i);

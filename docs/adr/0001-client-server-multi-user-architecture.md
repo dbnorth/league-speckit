@@ -66,7 +66,7 @@ router guards (UI)                   controllers + auth helpers    lists, todos
 
 | Option | Why not |
 |--------|---------|
-| **localStorage-only todos (no backend)** | No shared database, no real multi-user isolation, does not match course API/testing goals. |
+| **localStorage-only todos (no backend)** | No shared database, no real multi-user isolation, does not match league API/testing goals. |
 | **JWT in cookie only, no Session table** | Harder to revoke on logout; server cannot invalidate a stolen token without extra infrastructure. |
 | **GraphQL or tRPC** | Heavier stack; REST + flat JSON matches existing rules and Agility export simplicity. |
 | **403 Forbidden on cross-user IDs** | Leaks that a resource exists; **404** treats other users' rows as not found (see `security.mdc`). |

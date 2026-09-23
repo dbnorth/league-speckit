@@ -157,16 +157,8 @@ const handleLogout = async () => {
 
 <template>
   <v-app-bar color="primary" density="comfortable">
-    <v-app-bar-title>Course Management System</v-app-bar-title>
+    <v-app-bar-title>League Management System</v-app-bar-title>
 
-    <v-btn
-      v-if="user?.role === 'admin'"
-      variant="text"
-      color="white"
-      to="/seasons"
-    >
-      Seasons
-    </v-btn>
     <v-btn
       v-if="user?.role === 'admin'"
       variant="text"
@@ -174,6 +166,22 @@ const handleLogout = async () => {
       to="/leagues"
     >
       Leagues
+    </v-btn>
+    <v-btn
+      v-if="user?.role === 'admin'"
+      variant="text"
+      color="white"
+      to="/teams"
+    >
+      Teams
+    </v-btn>
+    <v-btn
+      v-if="user?.role === 'admin'"
+      variant="text"
+      color="white"
+      to="/games"
+    >
+      Games
     </v-btn>
     <v-btn
       v-if="user?.role === 'admin'"
@@ -187,9 +195,9 @@ const handleLogout = async () => {
       v-if="user?.role === 'admin'"
       variant="text"
       color="white"
-      to="/teams"
+      to="/seasons"
     >
-      Teams
+      Seasons
     </v-btn>
 
     <v-spacer />

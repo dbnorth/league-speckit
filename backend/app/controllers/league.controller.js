@@ -124,6 +124,13 @@ exports.remove = async (req, res) => {
       });
     }
 
+    const seasonCount = await db.season.count({ where: { leagueId } });
+    if (seasonCount > 0) {
+      return res.status(400).send({
+        message: "Cannot delete league: seasons still exist.",
+      });
+    }
+
     const teamCount = await db.team.count({ where: { leagueId } });
     if (teamCount > 0) {
       return res.status(400).send({

@@ -128,9 +128,9 @@ Feature 1 establishes identity; Features 2–3 enforce per-user data boundaries.
 
 | Method | Endpoint            | Auth | Purpose                                 |
 | ------ | ------------------- | ---- | --------------------------------------- |
-| `POST` | `/courses/register` | No   | Create a new user account               |
-| `POST` | `/courses/login`    | No   | Authenticate and return session payload |
-| `POST` | `/courses/logout`   | Yes  | Invalidate current session token        |
+| `POST` | `/league/register` | No   | Create a new user account               |
+| `POST` | `/league/login`    | No   | Authenticate and return session payload |
+| `POST` | `/league/logout`   | Yes  | Invalidate current session token        |
 
 **Login / register success response** (flat JSON, no envelope):
 

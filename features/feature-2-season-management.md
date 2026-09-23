@@ -4,8 +4,8 @@
 **Branch pattern:** `feature/2-season-management`
 **Status:** Ready
 **Created:** 2026-02-01
-**Input:** Signed-in admin users manage a shared season catalog on one screen; new seasons are added via a dialog. Seasons have a name (30 characters), start date, and end date. Seasons are not assigned to a user.
-**Depends on:** [Feature 1 — User Authentication](feature-1-user-auth.md)
+**Input:** Signed-in admin users manage a shared season catalog on one screen; new seasons are added via a dialog. Seasons have a name (30 characters), start date, end date, and one league. A league may have many seasons. Seasons are not assigned to a user.
+**Depends on:** [Feature 1 — User Authentication](feature-1-user-auth.md), [Feature 3 — League Management](feature-3-league-management.md)
 
 ---
 
@@ -78,7 +78,7 @@
 **So that** students cannot create, edit, or delete seasons
 
 **Priority:** P1  
-**Independent test:** Sign in as a student — **Seasons** is hidden; `POST /courses/seasons` returns `403`  
+**Independent test:** Sign in as a student — **Seasons** is hidden; `POST /league/seasons` returns `403`  
 **Acceptance scenarios:** see ### US-2.7 under Acceptance Criteria
 
 ## Requirements
@@ -92,29 +92,33 @@
 - **FR-005**: Unauthenticated season API requests MUST return `401`. Unauthenticated navigation to `/seasons` MUST redirect to `login`.
 - **FR-006**: Seasons MUST be ordered by start date in API responses.
 - **FR-007**: This feature MUST deliver admin season CRUD and a **single-view** season UI in `Seasons.vue` (dialog-based add/edit/delete). No sidebar/main split.
-- **FR-008**: `name` MUST be required, unique, trimmed, and at most 30 characters. Too-long message: **"Season name must be 30 characters or fewer."** Duplicate message: **"Season name is already taken."**
+- **FR-008**: `name` MUST be required, trimmed, and at most 30 characters. Too-long message: **"Season name must be 30 characters or fewer."** The pair (`leagueId`, `name`) MUST be unique. Duplicate message: **"Season name is already taken in this league."**
 - **FR-009**: `startDate` and `endDate` MUST be required. `endDate` MUST be after `startDate`. Date-order message: **"End date must be after start date."**
+- **FR-010**: `leagueId` MUST be a required integer that exists in `leagues`. Missing league message: **"League not found."** (HTTP `400`). A league MAY have many seasons. Each season MUST belong to exactly one league.
+- **FR-011**: `DELETE` of a league MUST fail with `400` when any season references that league. Message: **"Cannot delete league: seasons still exist."** Do **not** cascade-delete seasons when a league is deleted. The league and its seasons MUST remain stored.
 
 ---
 
 ## Assumptions
 
-- Feature 1 auth and session handling MUST be merged to `dev` before implementing this feature.
+- Feature 1 auth and Feature 3 league catalog MUST be merged to `dev` before implementing this relationship.
 - A user with role `admin` exists for this feature (Feature 1 `role`; tests may seed an admin).
-- Seasons are not assigned to users. Any authenticated user MAY `GET` the season catalog. The **Seasons** manager UI is admin-only. Student enrollment UI is a later feature.
+- Tests MAY seed at least one league (from Feature 3) before creating a season.
+- Seasons belong to a **league**, not to a signed-in user. Any authenticated user MAY `GET` the season catalog. The **Seasons** manager UI is admin-only. Student enrollment UI is a later feature.
 - Seasons use **dialog-based** workflows (no split sidebar / main panel).
-- API mount for this resource is `/courses/…`. Use `/courses/seasons`.
+- API mount for this resource is `/league/…`. Use `/league/seasons`.
 
 ## Edge Cases
 
 - Empty or whitespace-only required field → client block; **"Required"**; no API call.
 - `name` longer than 30 characters → **"Season name must be 30 characters or fewer."**
 - `endDate` before or equal to `startDate` → **"End date must be after start date."**
-- Duplicate `name` → `400` with `{ "message": "Season name is already taken." }`
+- Duplicate `name` in the same league → `400` with `{ "message": "Season name is already taken in this league." }`
+- Unknown `leagueId` → `400` with `{ "message": "League not found." }`
 - Unknown `seasonId` on PUT/DELETE → `404` (season does not exist — not a per-user hide).
 - Authenticated `student` (or any non-admin) on `POST` / `PUT` / `DELETE` → `403`.
 - Authenticated `student` on `GET` → `200` with the shared catalog.
-- Unauthenticated user on `/seasons` or `GET /courses/seasons` → redirect or `401`.
+- Unauthenticated user on `/seasons` or `GET /league/seasons` → redirect or `401`.
 
 ## Success Criteria
 
@@ -131,7 +135,7 @@ Seasons are a **shared catalog**. They are not owned by or assigned to a user. O
 
 | Rule               | Requirement                                                                                                              |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| **Read scope**     | `GET /courses/seasons` returns **all** seasons to any authenticated user.                                                |
+| **Read scope**     | `GET /league/seasons` returns **all** seasons to any authenticated user.                                                |
 | **Write scope**    | `POST`, `PUT`, and `DELETE` are allowed only when `req.user.role` is `admin`.                                            |
 | **Create scope**   | New seasons have no owner. Do not persist `userId`. Ignore `userId` if sent in the body.                                 |
 | **Missing season** | Unknown `seasonId` → `404` with `{ "message": "Season with id=<id> not found." }`. Never use ownership `404` to hide rows. |
@@ -145,10 +149,10 @@ Seasons are a **shared catalog**. They are not owned by or assigned to a user. O
 
 | Method   | Endpoint                     | Auth       | Purpose                                 |
 | -------- | ---------------------------- | ---------- | --------------------------------------- |
-| `GET`    | `/courses/seasons`           | Yes        | Fetch all seasons in the shared catalog |
-| `POST`   | `/courses/seasons`           | Yes, admin | Create a season in the shared catalog   |
-| `PUT`    | `/courses/seasons/:seasonId` | Yes, admin | Update a season                         |
-| `DELETE` | `/courses/seasons/:seasonId` | Yes, admin | Delete a season                         |
+| `GET`    | `/league/seasons`           | Yes        | Fetch all seasons in the shared catalog |
+| `POST`   | `/league/seasons`           | Yes, admin | Create a season in the shared catalog   |
+| `PUT`    | `/league/seasons/:seasonId` | Yes, admin | Update a season                         |
+| `DELETE` | `/league/seasons/:seasonId` | Yes, admin | Delete a season                         |
 
 **Create season request body:**
 
@@ -156,7 +160,8 @@ Seasons are a **shared catalog**. They are not owned by or assigned to a user. O
 {
   "name": "2026 Fall",
   "startDate": "2026-08-15",
-  "endDate": "2026-12-15"
+  "endDate": "2026-12-15",
+  "leagueId": 1
 }
 ```
 
@@ -172,6 +177,12 @@ Do not send `id` or `userId` on create. If `userId` is present, ignore it.
   "name": "2026 Fall",
   "startDate": "2026-08-15",
   "endDate": "2026-12-15",
+  "leagueId": 1,
+  "league": {
+    "id": 1,
+    "name": "OKC Youth Soccer",
+    "sport": "soccer"
+  },
   "createdAt": "2026-07-02T12:00:00.000Z",
   "updatedAt": "2026-07-02T12:00:00.000Z"
 }
@@ -190,10 +201,11 @@ Do not send `id` or `userId` on create. If `userId` is present, ignore it.
 - Primary action: **+ New season** (`oc-cta`) opens the **Add Season** `<v-dialog>`.
 - **Add Season** fields (same set on **Edit Season**, edit pre-filled):
   - **Season Name** (`v-text-field`)
+  - **League** (`v-select` of existing Feature 3 leagues from `GET /league/leagues`)
   - **Start Date** (`v-date-picker`)
   - **End Date** (`v-date-picker`)
 - **Add Season** actions: **Create** (`oc-cta`) / **Cancel** (secondary `variant="text"` or `outlined`).
-- List: `v-table` (or `v-list`); columns **season name**, **start date**, and **end date** only; rows ordered by start date (FR-006). No Items/sections icon in this feature.
+- List: `v-table` (or `v-list`); columns **season name**, **league**, **start date**, and **end date**; rows ordered by start date (FR-006). No Items/sections icon in this feature.
 - Icon-only row actions use `size="small"` and accessible `aria-label`s:
   - **Edit season** — opens **Edit Season** `<v-dialog>` pre-filled with current data; **Save Season** (`oc-cta`) / **Cancel** (secondary)
   - **Delete season** — opens **Delete Season** confirmation `<v-dialog>` with copy **"Delete this season?"**; **Delete Season** (`oc-cta`) / **Cancel** (secondary)
@@ -216,7 +228,7 @@ Do not send `id` or `userId` on create. If `userId` is present, ignore it.
 
 ## Key Entities
 
-- **Season**: shared catalog row (name, start date, end date). Not owned by a user. Admins manage it in this feature; students view seasons when they enroll (later feature).
+- **Season**: shared catalog row (name, start date, end date) that belongs to one **League**. A league may have many seasons. Not owned by a user. Admins manage it in this feature; students view seasons when they enroll (later feature).
 
 ---
 
@@ -227,15 +239,20 @@ Do not send `id` or `userId` on create. If `userId` is present, ignore it.
 | Field       | Type       | Rules                                              |
 | ----------- | ---------- | -------------------------------------------------- |
 | `id`        | INTEGER PK | Auto-increment                                     |
-| `name`      | STRING(30) | Required; unique; trimmed; at most 30 characters   |
+| `name`      | STRING(30) | Required; trimmed; at most 30 characters           |
 | `startDate` | DATE       | Required                                           |
 | `endDate`   | DATE       | Required; must be after `startDate`                |
+| `leagueId`  | INTEGER FK | Required; references `leagues.id`                  |
 | `createdAt` | DATE       | Sequelize timestamps                               |
 | `updatedAt` | DATE       | Sequelize timestamps                               |
 
+Unique index on (`leagueId`, `name`).  
+`leagueId` uses `ON DELETE RESTRICT`.
+
 ### Associations (in `models/index.js`)
 
-None in this feature
+- `Season belongsTo League` (`leagueId`, `onDelete: 'RESTRICT'`)
+- `League hasMany Season`
 
 ---
 
@@ -256,9 +273,9 @@ None in this feature
 - **Given** I am signed in as a user with role `admin`
 - **And** I am viewing the seasons view
 - **When** I click **+ New season**
-- **And** I enter season name `2026 Fall`, start date `2026-08-15`, and end date `2026-12-15`
+- **And** I enter season name `2026 Fall`, start date `2026-08-15`, end date `2026-12-15`, and league `OKC Youth Soccer`
 - **And** I click **Create**
-- **Then** the API returns `201` with a season object containing `id`, `name` `2026 Fall`, `startDate`, and `endDate`
+- **Then** the API returns `201` with a season object containing `id`, `name` `2026 Fall`, `startDate`, `endDate`, and `leagueId`
 - **And** `2026 Fall` appears in the seasons view list
 - **And** the add-season dialog closes
 
@@ -295,13 +312,20 @@ None in this feature
 #### Scenario: User creates a season with a duplicate name
 
 - **Given** I am signed in as a user with role `admin`
-- **And** a season named `2026 Fall` already exists
+- **And** a season named `2026 Fall` already exists in league `OKC Youth Soccer`
 - **And** I am viewing the seasons view
 - **When** I click **+ New season**
-- **And** I enter season name `2026 Fall` with valid start and end dates
+- **And** I enter season name `2026 Fall` with valid start and end dates and that league
 - **And** I click **Create**
-- **Then** the API returns `400` with `{ "message": "Season name is already taken." }`
-- **And** no second season named `2026 Fall` is stored
+- **Then** the API returns `400` with `{ "message": "Season name is already taken in this league." }`
+- **And** no second season named `2026 Fall` is stored in that league
+
+#### Scenario: User creates a season with an unknown league
+
+- **Given** I am signed in as a user with role `admin`
+- **When** I send `POST /league/seasons` with a `leagueId` that does not exist and otherwise valid data
+- **Then** the API returns `400` with `{ "message": "League not found." }`
+- **And** no season is stored
 
 ---
 
@@ -420,20 +444,20 @@ None in this feature
 #### Scenario: Student can list seasons via the API
 
 - **Given** I am signed in as a user with role `student`
-- **When** I request `GET /courses/seasons`
+- **When** I request `GET /league/seasons`
 - **Then** the API returns `200` with an array of season objects
 
 #### Scenario: Student cannot create a season via the API
 
 - **Given** I am signed in as a user with role `student`
-- **When** I send `POST /courses/seasons` with a valid season body
+- **When** I send `POST /league/seasons` with a valid season body
 - **Then** the API returns `403` with `{ "message": "Admin role required." }`
 - **And** no new season is stored
 
 #### Scenario: Unauthenticated API request to seasons
 
 - **Given** I have no valid session token
-- **When** I request `GET /courses/seasons`
+- **When** I request `GET /league/seasons`
 - **Then** the API returns `401` with an unauthorized message
 
 #### Scenario: Unauthenticated user navigates to seasons
@@ -441,6 +465,15 @@ None in this feature
 - **Given** I have no session in `localStorage`
 - **When** I navigate to `/seasons`
 - **Then** I am redirected to the login page
+
+#### Scenario: User cannot delete a league that has a season
+
+- **Given** I am signed in as a user with role `admin`
+- **And** a season exists in league `OKC Youth Soccer`
+- **When** I send `DELETE /league/leagues/:leagueId` for that league
+- **Then** the API returns `400` with `{ "message": "Cannot delete league: seasons still exist." }`
+- **And** the league is still stored
+- **And** the season is still stored
 
 ---
 
@@ -454,6 +487,7 @@ None in this feature
 | US-2.2 | User creates a season with a name that is too long      | `frontend/tests/Seasons.test.js`                                  | `User creates a season with a name that is too long`      |
 | US-2.2 | User creates a season with end date before start date   | `frontend/tests/Seasons.test.js`                                  | `User creates a season with end date before start date`   |
 | US-2.2 | User creates a season with a duplicate name             | `backend/tests/seasons.test.js`, `frontend/tests/Seasons.test.js` | `User creates a season with a duplicate name`             |
+| US-2.2 | User creates a season with an unknown league            | `backend/tests/seasons.test.js`                                   | `User creates a season with an unknown league`            |
 | US-2.3 | Seasons view loads with existing seasons                | `backend/tests/seasons.test.js`, `frontend/tests/Seasons.test.js` | `Seasons view loads with existing seasons`                |
 | US-2.3 | User has no seasons                                     | `frontend/tests/Seasons.test.js`                                  | `User has no seasons`                                     |
 | US-2.4 | season rows show edit and delete actions                | `frontend/tests/Seasons.test.js`                                  | `season rows show edit and delete actions`                |
@@ -469,6 +503,7 @@ None in this feature
 | US-2.7 | Student cannot create a season via the API              | `backend/tests/seasons.test.js`                                   | `Student cannot create a season via the API`              |
 | US-2.7 | Unauthenticated API request to seasons                  | `backend/tests/seasons.test.js`                                   | `Unauthenticated API request to seasons`                  |
 | US-2.7 | Unauthenticated user navigates to seasons               | `frontend/tests/router.test.js`                                   | `Unauthenticated user navigates to seasons`               |
+| US-2.7 | User cannot delete a league that has a season           | `backend/tests/seasons.test.js`, `backend/tests/leagues.test.js`  | `User cannot delete a league that has a season`           |
 
 ---
 
@@ -506,7 +541,7 @@ Do not implement behavior not in this spec.
 
 - Student-facing season catalog UI (API `GET` is in this feature)
 - Student enrollment in seasons (later feature)
-- Assigning a season to a team or user ([Feature 5](feature-5-team-management.md) does not attach teams to seasons)
+- Assigning a season to a team or user ([Feature 5](feature-5-team-management.md) attaches teams to a league, not to a season)
 - Non-admin season management UI
 - **Leagues** menu item and leagues view ([Feature 3](feature-3-league-management.md))
 - Creating `MenuBar` (introduced in [Feature 1](feature-1-user-auth.md); this feature only adds **Seasons** for role `admin`)
@@ -518,5 +553,7 @@ Do not implement behavior not in this spec.
 - `MenuBar` is Feature 1 chrome; Feature 2 added **Seasons** for `admin`.
 - Feature 3 adds **Leagues** (allowed role `admin`) to this `MenuBar`; it MUST NOT create a second `MenuBar`.
 - [Feature 5](feature-5-team-management.md) adds **Teams** to this `MenuBar`. Teams belong to leagues, not to seasons.
+- Feature 3 `DELETE /league/leagues/:leagueId` MUST reject `400` when seasons still reference that league.
+- [Feature 6](feature-6-game-management.md) attaches games to a season. Feature 6 MUST reject `DELETE /league/seasons/:seasonId` with `400` when games still reference that season.
 
 ---

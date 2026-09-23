@@ -3,12 +3,31 @@ import logger from "../config/logger.js";
 
 const exports = {};
 
+const seasonInclude = {
+  model: db.league,
+  as: "league",
+  attributes: ["id", "name", "sport"],
+};
+
 const isEndAfterStart = (startDate, endDate) =>
   Boolean(startDate && endDate && endDate > startDate);
+
+const parseLeagueId = (leagueId) => {
+  if (leagueId === undefined || leagueId === null || leagueId === "") {
+    return null;
+  }
+
+  const parsed = parseInt(leagueId, 10);
+  return Number.isNaN(parsed) ? NaN : parsed;
+};
+
+const findSeason = (seasonId) =>
+  db.season.findByPk(seasonId, { include: seasonInclude });
 
 exports.findAll = async (req, res) => {
   try {
     const seasons = await db.season.findAll({
+      include: seasonInclude,
       order: [["startDate", "ASC"]],
     });
 
@@ -21,9 +40,10 @@ exports.findAll = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { name, startDate, endDate } = req.body;
+    const { name, startDate, endDate, leagueId } = req.body;
+    const parsedLeagueId = parseLeagueId(leagueId);
 
-    if (!name?.trim()) {
+    if (!name?.trim() || !startDate || !endDate || parsedLeagueId === null) {
       return res.status(400).send({ message: "Required" });
     }
 
@@ -33,30 +53,38 @@ exports.create = async (req, res) => {
       });
     }
 
-    if (!startDate || !endDate) {
-      return res.status(400).send({ message: "Required" });
-    }
-
     if (!isEndAfterStart(startDate, endDate)) {
       return res.status(400).send({
         message: "End date must be after start date.",
       });
     }
 
-    const existing = await db.season.findOne({
-      where: { name: name.trim() },
-    });
-    if (existing) {
-      return res.status(400).send({ message: "Season name is already taken." });
+    if (Number.isNaN(parsedLeagueId)) {
+      return res.status(400).send({ message: "League not found." });
     }
 
-    const season = await db.season.create({
+    const league = await db.league.findByPk(parsedLeagueId);
+    if (!league) {
+      return res.status(400).send({ message: "League not found." });
+    }
+
+    const existing = await db.season.findOne({
+      where: { leagueId: parsedLeagueId, name: name.trim() },
+    });
+    if (existing) {
+      return res.status(400).send({
+        message: "Season name is already taken in this league.",
+      });
+    }
+
+    const created = await db.season.create({
       name: name.trim(),
-      startDate: startDate,
-      endDate: endDate,
+      startDate,
+      endDate,
+      leagueId: parsedLeagueId,
     });
 
-    return res.status(201).send(season);
+    return res.status(201).send(await findSeason(created.id));
   } catch (err) {
     logger.error(`season create failed: ${err.message}`);
     return res.status(500).send({ message: "Failed to create season." });
@@ -66,7 +94,8 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const seasonId = parseInt(req.params.seasonId, 10) || req.body.seasonId;
-    const { name, startDate, endDate } = req.body;
+    const { name, startDate, endDate, leagueId } = req.body;
+    const parsedLeagueId = parseLeagueId(leagueId);
 
     if (seasonId == null || Number.isNaN(Number(seasonId))) {
       return res.status(400).send({ message: "Invalid season id." });
@@ -79,7 +108,7 @@ exports.update = async (req, res) => {
       });
     }
 
-    if (!name?.trim()) {
+    if (!name?.trim() || !startDate || !endDate || parsedLeagueId === null) {
       return res.status(400).send({ message: "Required" });
     }
 
@@ -89,28 +118,36 @@ exports.update = async (req, res) => {
       });
     }
 
-    if (!startDate || !endDate) {
-      return res.status(400).send({ message: "Required" });
-    }
-
     if (!isEndAfterStart(startDate, endDate)) {
       return res.status(400).send({
         message: "End date must be after start date.",
       });
     }
 
+    if (Number.isNaN(parsedLeagueId)) {
+      return res.status(400).send({ message: "League not found." });
+    }
+
+    const league = await db.league.findByPk(parsedLeagueId);
+    if (!league) {
+      return res.status(400).send({ message: "League not found." });
+    }
+
     const existing = await db.season.findOne({
-      where: { name: name.trim() },
+      where: { leagueId: parsedLeagueId, name: name.trim() },
     });
     if (existing && existing.id !== Number(seasonId)) {
-      return res.status(400).send({ message: "Season name is already taken." });
+      return res.status(400).send({
+        message: "Season name is already taken in this league.",
+      });
     }
 
     await db.season.update(
       {
         name: name.trim(),
-        startDate: startDate,
-        endDate: endDate,
+        startDate,
+        endDate,
+        leagueId: parsedLeagueId,
       },
       {
         where: { id: seasonId },
@@ -131,12 +168,21 @@ exports.remove = async (req, res) => {
       return res.status(400).send({ message: "Invalid season id." });
     }
 
-    const deleted = await db.season.destroy({ where: { id: seasonId } });
-    if (!deleted) {
+    const existing = await db.season.findByPk(seasonId);
+    if (!existing) {
       return res.status(404).send({
         message: `Season with id=${seasonId} not found.`,
       });
     }
+
+    const gameCount = await db.game.count({ where: { seasonId } });
+    if (gameCount > 0) {
+      return res.status(400).send({
+        message: "Cannot delete season: games still exist.",
+      });
+    }
+
+    await db.season.destroy({ where: { id: seasonId } });
 
     return res.status(200).send({ message: "season deleted successfully." });
   } catch (err) {
