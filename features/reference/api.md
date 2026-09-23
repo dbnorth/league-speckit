@@ -1,6 +1,6 @@
 # API Reference
 
-**Status:** Feature 6 games. Mount path is `/league` (see `backend/server.js`).
+**Status:** Feature 8 create-season-games. Mount path is `/league` (see `backend/server.js`).
 
 ## Endpoints
 
@@ -10,6 +10,7 @@
 | `POST`   | `/league/seasons`           | Yes, admin | Create a season                         |
 | `PUT`    | `/league/seasons/:seasonId` | Yes, admin | Update a season                         |
 | `DELETE` | `/league/seasons/:seasonId` | Yes, admin | Delete a season                         |
+| `POST`   | `/league/seasons/:seasonId/games` | Yes, admin | Generate the season home-and-away schedule |
 | `GET`    | `/league/leagues`           | Yes        | Fetch all leagues in the shared catalog |
 | `POST`   | `/league/leagues`           | Yes, admin | Create a league                         |
 | `PUT`    | `/league/leagues/:leagueId` | Yes, admin | Update a league                         |
@@ -39,9 +40,14 @@
   "name": "2026 Fall",
   "startDate": "2026-08-15",
   "endDate": "2026-12-15",
-  "leagueId": 1
+  "leagueId": 1,
+  "gameDays": ["saturday"],
+  "gameTime": "18:00",
+  "minDaysBetweenGames": 7
 }
 ```
+
+**Create season games:** `POST /league/seasons/:seasonId/games` with no body. Success `201` is an array of Feature 6 game objects, count `n * (n - 1)` for `n` teams in the season's league. Each game `location` is the home team's `homeField`.
 
 **League create / update body:**
 
@@ -69,7 +75,7 @@ Do not send `id` on create. League `userId` is ignored. Person `userId` is an op
 
 `userId` MAY be omitted or `null`. Sending `null` on update unlinks the user.
 
-**Team create / update body:** `{ "name": "OKC Strikers", "leagueId": 1 }`  
+**Team create / update body:** `{ "name": "OKC Strikers", "leagueId": 1, "homeField": "Memorial Field" }`  
 **Player create / update body:** `{ "personId": 1, "position": "Forward", "number": 10 }`  
 **Game create / update body:**
 

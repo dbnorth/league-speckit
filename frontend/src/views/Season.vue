@@ -5,7 +5,7 @@ import seasonServices from "../services/seasonServices.js";
 import gameServices from "../services/gameServices.js";
 import teamServices from "../services/teamServices.js";
 import GameForm from "../components/GameForm.vue";
-import { formatDate } from "../config/validation.js";
+import { formatDate, toDateInputValue } from "../config/validation.js";
 
 const route = useRoute();
 
@@ -27,10 +27,16 @@ const teams = ref([]);
 const loading = ref(false);
 const listError = ref("");
 const formDialogOpen = ref(false);
+const isAddMode = ref(true);
 const form = ref(emptyGameForm());
 const formRef = ref(null);
 const formError = ref("");
 const saving = ref(false);
+const editingId = ref(null);
+const creatingGames = ref(false);
+
+const formTitle = computed(() => (isAddMode.value ? "Add Game" : "Edit Game"));
+const saveLabel = computed(() => (isAddMode.value ? "Create" : "Save Game"));
 
 const seasonId = computed(() => parseInt(route.params.seasonId, 10));
 
@@ -90,8 +96,46 @@ const retrieveSeason = async () => {
   }
 };
 
+const createSeasonGames = async () => {
+  if (!season.value) {
+    return;
+  }
+
+  listError.value = "";
+  creatingGames.value = true;
+
+  try {
+    await seasonServices.creategames(seasonId.value);
+    await retrieveSeason();
+  } catch (error) {
+    listError.value =
+      error.response?.data?.message || "Failed to create games.";
+  } finally {
+    creatingGames.value = false;
+  }
+};
+
 const openAddGameDialog = () => {
+  isAddMode.value = true;
+  editingId.value = null;
   form.value = emptyGameForm(seasonId.value);
+  formError.value = "";
+  formDialogOpen.value = true;
+};
+
+const openEditGameDialog = (game) => {
+  isAddMode.value = false;
+  editingId.value = game.id;
+  form.value = {
+    seasonId: game.seasonId ?? seasonId.value,
+    gameDate: toDateInputValue(game.gameDate),
+    startTime: toTimeInputValue(game.startTime),
+    location: game.location ?? "",
+    homeTeamId: game.homeTeamId ?? null,
+    visitingTeamId: game.visitingTeamId ?? null,
+    homeTeamScore: game.homeTeamScore ?? "",
+    visitingTeamScore: game.visitingTeamScore ?? "",
+  };
   formError.value = "";
   formDialogOpen.value = true;
 };
@@ -99,6 +143,7 @@ const openAddGameDialog = () => {
 const closeFormDialog = () => {
   formDialogOpen.value = false;
   formError.value = "";
+  editingId.value = null;
 };
 
 const saveGame = async () => {
@@ -115,7 +160,7 @@ const saveGame = async () => {
     seasonId: form.value.seasonId,
     gameDate: form.value.gameDate,
     startTime: form.value.startTime,
-    location: form.value.location.trim(),
+    location: isAddMode.value ? null : form.value.location.trim() || null,
     homeTeamId: form.value.homeTeamId,
     visitingTeamId: form.value.visitingTeamId,
     homeTeamScore: optionalScore(form.value.homeTeamScore),
@@ -123,12 +168,20 @@ const saveGame = async () => {
   };
 
   try {
-    await gameServices.creategame(payload);
+    if (isAddMode.value) {
+      await gameServices.creategame(payload);
+    } else {
+      await gameServices.updategame(editingId.value, {
+        ...payload,
+        gameId: editingId.value,
+      });
+    }
     closeFormDialog();
     await retrieveSeason();
   } catch (error) {
     formError.value =
-      error.response?.data?.message || "Failed to create game.";
+      error.response?.data?.message ||
+      (isAddMode.value ? "Failed to create game." : "Failed to update game.");
   } finally {
     saving.value = false;
   }
@@ -150,6 +203,16 @@ watch(() => route.params.seasonId, retrieveSeason);
           </template>
         </v-card-subtitle>
         <template #append>
+          <v-btn
+            color="primary"
+            variant="elevated"
+            class="oc-cta mr-2"
+            :disabled="!season"
+            :loading="creatingGames"
+            @click="createSeasonGames"
+          >
+            Create Games
+          </v-btn>
           <v-btn
             color="primary"
             variant="elevated"
@@ -184,6 +247,7 @@ watch(() => route.params.seasonId, retrieveSeason);
                 <th class="text-left">Visiting team</th>
                 <th class="text-left">Home score</th>
                 <th class="text-left">Visiting score</th>
+                <th class="text-left">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -195,6 +259,16 @@ watch(() => route.params.seasonId, retrieveSeason);
                 <td>{{ game.visitingTeam?.name }}</td>
                 <td>{{ formatScore(game.homeTeamScore) }}</td>
                 <td>{{ formatScore(game.visitingTeamScore) }}</td>
+                <td>
+                  <v-icon
+                    size="small"
+                    class="mx-4"
+                    aria-label="Edit game"
+                    @click="openEditGameDialog(game)"
+                  >
+                    mdi-pencil
+                  </v-icon>
+                </td>
               </tr>
             </tbody>
           </v-table>
@@ -204,13 +278,14 @@ watch(() => route.params.seasonId, retrieveSeason);
 
     <v-dialog v-model="formDialogOpen" max-width="560">
       <v-card rounded="lg">
-        <v-card-title>Add Game</v-card-title>
+        <v-card-title>{{ formTitle }}</v-card-title>
         <v-card-text>
           <GameForm
             ref="formRef"
             v-model="form"
             :seasons="seasons"
             :teams="teams"
+            :show-location="!isAddMode"
             @submit="saveGame"
           />
           <v-alert v-if="formError" type="error" density="compact" class="mt-2">
@@ -227,7 +302,7 @@ watch(() => route.params.seasonId, retrieveSeason);
             :loading="saving"
             @click="saveGame"
           >
-            Create
+            {{ saveLabel }}
           </v-btn>
         </v-card-actions>
       </v-card>

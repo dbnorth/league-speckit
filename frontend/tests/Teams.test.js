@@ -67,6 +67,7 @@ const strikers = {
   id: 1,
   name: "OKC Strikers",
   leagueId: 1,
+  homeField: "Memorial Field",
   league: soccerLeague,
   players: [],
 };
@@ -79,6 +80,7 @@ const strikersWithJane = {
 const validTeamForm = (overrides = {}) => ({
   name: "OKC Strikers",
   leagueId: 1,
+  homeField: "Memorial Field",
   ...overrides,
 });
 
@@ -191,6 +193,7 @@ describe("Feature 5 — Team Management", () => {
       expect(teamServices.createteam).toHaveBeenCalledWith({
         name: "OKC Strikers",
         leagueId: 1,
+        homeField: "Memorial Field",
       });
       expect(wrapper.find(".v-dialog-stub").exists()).toBe(false);
       expect(wrapper.text()).toContain("OKC Strikers");

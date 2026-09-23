@@ -10,6 +10,7 @@ const router = useRouter();
 const emptyForm = () => ({
   name: "",
   leagueId: null,
+  homeField: "",
 });
 
 const teams = ref([]);
@@ -69,6 +70,7 @@ const saveTeam = async () => {
     await teamServices.createteam({
       name: form.value.name.trim(),
       leagueId: form.value.leagueId,
+      homeField: form.value.homeField.trim(),
     });
     closeFormDialog();
     await retrieveTeams();

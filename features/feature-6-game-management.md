@@ -98,14 +98,14 @@
 - **FR-001**: All game endpoints MUST require a valid session (`authenticate`). `GET` MUST be allowed for any authenticated role. `POST`, `PUT`, and `DELETE` MUST require `req.user.role` equal to `admin`.
 - **FR-002**: Games MUST be a **shared catalog**. The `games` table MUST NOT include `userId`. The API MUST ignore any client-supplied ownership `userId`.
 - **FR-003**: Authenticated non-admin users (including `student`) MUST receive `403` with `{ "message": "Admin role required." }` on `POST`, `PUT`, and `DELETE`. `GET` MUST return `200` for any authenticated user. They MUST NOT see **Games** in `MenuBar`.
-- **FR-004**: Required game fields MUST be present and trimmed; empty or whitespace-only values MUST be rejected (client block and/or `400`). Required fields are `seasonId`, `gameDate`, `startTime`, `location`, `homeTeamId`, and `visitingTeamId`.
+- **FR-004**: Required game fields MUST be present and trimmed; empty or whitespace-only values MUST be rejected (client block and/or `400`). Required fields are `seasonId`, `gameDate`, `startTime`, `homeTeamId`, and `visitingTeamId`. `location` is not required on create.
 - **FR-005**: Unauthenticated game API requests MUST return `401`. Unauthenticated navigation to `/games` MUST redirect to `login`.
 - **FR-006**: Games MUST be ordered by `gameDate`, then `startTime`, in API responses.
 - **FR-007**: This feature MUST deliver admin game CRUD and a **single-view** game UI in `Games.vue` (dialog-based add/edit/delete). No sidebar/main split.
 - **FR-008**: `seasonId` MUST be a required integer that exists in `seasons`. Missing season message: **"Season not found."** (HTTP `400`). A season MAY have many games.
 - **FR-009**: `homeTeamId` and `visitingTeamId` MUST be required integers that exist in `teams`. Missing team messages: **"Home team not found."**, **"Visiting team not found."** (HTTP `400`). They MUST be different. Same-team message: **"Home team and visiting team must be different."** Both teams MUST belong to the same league as the selected season. League-mismatch message: **"Home team and visiting team must be in the season's league."** A team MAY have many games (as home or visiting).
 - **FR-010**: `gameDate` MUST be a required date. `startTime` MUST be a required time.
-- **FR-011**: `location` MUST be required, trimmed, and at most 50 characters. Too-long message: **"Location must be 50 characters or fewer."**
+- **FR-011**: On create, `location` MUST be set from the home team's `homeField` (Feature 5). The client MUST NOT be required to send `location` on create. The **Edit Game** dialog MUST show **Location** so an admin can set or clear it. When present on edit, `location` MUST be trimmed and at most 50 characters. Too-long message: **"Location must be 50 characters or fewer."** Empty or whitespace-only on edit MUST store `null`.
 - **FR-012**: `homeTeamScore` and `visitingTeamScore` MAY be omitted or `null` (a scheduled game with no score yet). When present, each MUST be an integer from `0` through `999`. Invalid message: **"Score must be between 0 and 999."**
 - **FR-013**: `DELETE` of a season MUST fail with `400` when any game references that season. `DELETE` of a team MUST fail with `400` when any game uses that team as home or visiting. Do **not** cascade-delete games when a season or team is deleted. Messages: **"Cannot delete season: games still exist."**, **"Cannot delete team: games still exist."** The parent row and its games MUST remain stored.
 
@@ -128,7 +128,7 @@
 ## Edge Cases
 
 - Empty or whitespace-only required field → client block; **"Required"**; no API call.
-- `location` longer than 50 characters → **"Location must be 50 characters or fewer."**
+- `location` longer than 50 characters (edit) → **"Location must be 50 characters or fewer."**
 - Unknown `seasonId` → `400` with `{ "message": "Season not found." }`
 - Unknown `homeTeamId` → `400` with `{ "message": "Home team not found." }`
 - Unknown `visitingTeamId` → `400` with `{ "message": "Visiting team not found." }`
@@ -246,15 +246,15 @@ This feature also changes Feature 2 and Feature 5 delete APIs (FR-013): `DELETE 
 
 - Heading: **Games**
 - Primary action: **+ New game** (`oc-cta`) opens the **Add Game** `<v-dialog>`.
-- **Add Game** fields (same set on **Edit Game**, edit pre-filled):
+- **Add Game** fields:
   - **Season** (`v-select` of existing seasons from `GET /league/seasons`, display season `name`)
   - **Date** (`v-text-field` type date)
   - **Start Time** (`v-text-field` type time)
-  - **Location** (`v-text-field`)
   - **Home Team** (`v-select` of existing teams from `GET /league/teams`, display team `name`)
   - **Visiting Team** (`v-select` of existing teams, display team `name`)
   - **Home Team Score** (`v-text-field` type number; optional)
   - **Visiting Team Score** (`v-text-field` type number; optional)
+- **Edit Game** uses the same fields plus **Location** (`v-text-field`, optional, max 50), pre-filled.
 - **Add Game** actions: **Create** (`oc-cta`) / **Cancel** (secondary `variant="text"` or `outlined`).
 - List: `v-table` (or `v-list`); columns **date**, **start time**, **location**, **home team**, **visiting team**, **home score**, **visiting score**, and **season**; rows ordered by date then start time (FR-006).
 - Icon-only row actions use `size="small"` and accessible `aria-label`s:
@@ -292,7 +292,7 @@ This feature also changes Feature 2 and Feature 5 delete APIs (FR-013): `DELETE 
 | `seasonId`           | INTEGER FK | Required; references `seasons.id`                           |
 | `gameDate`           | DATE       | Required                                                    |
 | `startTime`          | TIME       | Required                                                    |
-| `location`           | STRING(50) | Required; trimmed; at most 50 characters                    |
+| `location`           | STRING(50) | Optional; trimmed; at most 50 characters; `null` when empty |
 | `homeTeamId`         | INTEGER FK | Required; references `teams.id`                             |
 | `visitingTeamId`     | INTEGER FK | Required; references `teams.id`                             |
 | `homeTeamScore`      | INTEGER    | Optional; when present, integer 0–999                       |
@@ -332,10 +332,10 @@ This feature also changes Feature 2 and Feature 5 delete APIs (FR-013): `DELETE 
 - **And** teams `OKC Strikers` and `Tulsa FC` exist in that season's league
 - **And** I am viewing the games view
 - **When** I click **+ New game**
-- **And** I select season `2026 Fall`, date `2026-09-12`, start time `18:00`, location `Memorial Field`, home team `OKC Strikers`, and visiting team `Tulsa FC`
+- **And** I select season `2026 Fall`, date `2026-09-12`, start time `18:00`, home team `OKC Strikers`, and visiting team `Tulsa FC`
 - **And** I click **Create**
 - **Then** the API returns `201` with a game object containing `id`, nested `season.name` `2026 Fall`, `homeTeam.name` `OKC Strikers`, and `visitingTeam.name` `Tulsa FC`
-- **And** `Memorial Field` appears in the games view list
+- **And** `OKC Strikers` appears in the games view list
 - **And** the add-game dialog closes
 
 #### Scenario: User creates a game with a missing required field
@@ -347,16 +347,6 @@ This feature also changes Feature 2 and Feature 5 delete APIs (FR-013): `DELETE 
 - **And** I click **Create**
 - **Then** no API call is made
 - **And** I see the message **"Required"**
-
-#### Scenario: User creates a game with a location that is too long
-
-- **Given** I am signed in as a user with role `admin`
-- **And** I am viewing the games view
-- **When** I click **+ New game**
-- **And** I enter a location longer than 50 characters with otherwise valid data
-- **And** I click **Create**
-- **Then** no API call is made
-- **And** I see the message **"Location must be 50 characters or fewer."**
 
 #### Scenario: User creates a game with the same home and visiting team
 
@@ -430,7 +420,7 @@ This feature also changes Feature 2 and Feature 5 delete APIs (FR-013): `DELETE 
 - **Given** I am signed in as a user with role `admin`
 - **And** I am viewing the games view
 - **And** the game edit dialog is displayed
-- **When** I update values in the fields with valid values including scores `2` and `1`
+- **When** I update values in the fields with valid values including location `North Field` and scores `2` and `1`
 - **And** I click **Save Game**
 - **Then** the game data is updated
 - **And** the dialog is closed
@@ -552,7 +542,6 @@ This feature also changes Feature 2 and Feature 5 delete APIs (FR-013): `DELETE 
 | US-6.1 | Menu Selection                                                | `frontend/tests/MenuBar.test.js`, `frontend/tests/Games.test.js`   | `Menu Selection`                                                |
 | US-6.2 | User creates a new game                                       | `backend/tests/games.test.js`, `frontend/tests/Games.test.js`      | `User creates a new game`                                       |
 | US-6.2 | User creates a game with a missing required field             | `frontend/tests/Games.test.js`                                     | `User creates a game with a missing required field`             |
-| US-6.2 | User creates a game with a location that is too long          | `frontend/tests/Games.test.js`                                     | `User creates a game with a location that is too long`          |
 | US-6.2 | User creates a game with the same home and visiting team      | `backend/tests/games.test.js`                                      | `User creates a game with the same home and visiting team`      |
 | US-6.2 | User creates a game with an unknown season                    | `backend/tests/games.test.js`                                      | `User creates a game with an unknown season`                    |
 | US-6.2 | User creates a game with a team that is not in the season's league | `backend/tests/games.test.js`                                 | `User creates a game with a team that is not in the season's league` |

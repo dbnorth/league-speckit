@@ -12,12 +12,12 @@ const gameInclude = [
   {
     model: db.team,
     as: "homeTeam",
-    attributes: ["id", "name", "leagueId"],
+    attributes: ["id", "name", "leagueId", "homeField"],
   },
   {
     model: db.team,
     as: "visitingTeam",
-    attributes: ["id", "name", "leagueId"],
+    attributes: ["id", "name", "leagueId", "homeField"],
   },
 ];
 
@@ -46,16 +46,19 @@ const parseOptionalScore = (score) => {
 const findGame = (gameId) =>
   db.game.findByPk(gameId, { include: gameInclude });
 
-const validateGameFields = async ({
-  seasonId,
-  gameDate,
-  startTime,
-  location,
-  homeTeamId,
-  visitingTeamId,
-  homeTeamScore,
-  visitingTeamScore,
-}) => {
+const validateGameFields = async (
+  {
+    seasonId,
+    gameDate,
+    startTime,
+    location,
+    homeTeamId,
+    visitingTeamId,
+    homeTeamScore,
+    visitingTeamScore,
+  },
+  { useHomeField = false } = {}
+) => {
   const parsedSeasonId = parseRequiredId(seasonId);
   const parsedHomeTeamId = parseRequiredId(homeTeamId);
   const parsedVisitingTeamId = parseRequiredId(visitingTeamId);
@@ -64,14 +67,18 @@ const validateGameFields = async ({
     parsedSeasonId === null ||
     !gameDate ||
     !startTime ||
-    !location?.toString().trim() ||
     parsedHomeTeamId === null ||
     parsedVisitingTeamId === null
   ) {
     return { error: { status: 400, message: "Required" } };
   }
 
-  if (location.trim().length > 50) {
+  const trimmedLocation =
+    location === undefined || location === null || !String(location).trim()
+      ? null
+      : String(location).trim();
+
+  if (trimmedLocation && trimmedLocation.length > 50) {
     return {
       error: { status: 400, message: "Location must be 50 characters or fewer." },
     };
@@ -138,7 +145,9 @@ const validateGameFields = async ({
       seasonId: parsedSeasonId,
       gameDate,
       startTime,
-      location: location.trim(),
+      location: useHomeField
+        ? homeTeam.homeField?.trim() || null
+        : trimmedLocation,
       homeTeamId: parsedHomeTeamId,
       visitingTeamId: parsedVisitingTeamId,
       homeTeamScore: homeScore.value,
@@ -166,7 +175,7 @@ exports.findAll = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const result = await validateGameFields(req.body);
+    const result = await validateGameFields(req.body, { useHomeField: true });
     if (result.error) {
       return res.status(result.error.status).send({ message: result.error.message });
     }

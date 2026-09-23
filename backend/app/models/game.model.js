@@ -19,7 +19,7 @@ export default (sequelize, Sequelize) => {
     },
     location: {
       type: Sequelize.STRING(50),
-      allowNull: false,
+      allowNull: true,
     },
     homeTeamId: {
       type: Sequelize.INTEGER,

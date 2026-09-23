@@ -1,6 +1,6 @@
 # Data Model Reference
 
-**Status:** Feature 6 games (plus Features 2–5 seasons/leagues/people/teams, auth, and leftover section/faculty tables).
+**Status:** Feature 8 create-season-games (plus Features 2–7 seasons/leagues/people/teams/games/season view, auth, and leftover section/faculty tables).
 
 Update this file when a feature that defines schema merges to `dev`.
 
@@ -14,9 +14,12 @@ Update this file when a feature that defines schema merges to `dev`.
 | `name`      | STRING(30) | Required; trimmed; at most 30 characters         |
 | `startDate` | DATE       | Required                                         |
 | `endDate`   | DATE       | Required; must be after `startDate`              |
-| `leagueId`  | INTEGER FK | Required; references `leagues.id`                |
-| `createdAt` | DATE       | Sequelize timestamps                             |
-| `updatedAt` | DATE       | Sequelize timestamps                             |
+| `leagueId`             | INTEGER FK | Required; references `leagues.id`                |
+| `gameDays`             | JSON       | Required; non-empty weekday list                 |
+| `gameTime`             | TIME       | Required; used as generated game start time      |
+| `minDaysBetweenGames`  | INTEGER    | Required; integer 0–99                           |
+| `createdAt`            | DATE       | Sequelize timestamps                             |
+| `updatedAt`            | DATE       | Sequelize timestamps                             |
 
 Unique index on (`leagueId`, `name`). `leagueId` uses `ON DELETE RESTRICT`.
 
@@ -50,6 +53,7 @@ Unique index on (`leagueId`, `name`). `leagueId` uses `ON DELETE RESTRICT`.
 | ----------- | ---------- | ---------------------------------------------- |
 | `id`        | INTEGER PK | Auto-increment                                 |
 | `name`      | STRING(50) | Required; trimmed; at most 50 characters       |
+| `homeField` | STRING(50) | Required; trimmed; used as home-game location  |
 | `leagueId`  | INTEGER FK | Required; references `leagues.id`              |
 | `createdAt` | DATE       | Sequelize timestamps                           |
 | `updatedAt` | DATE       | Sequelize timestamps                           |
@@ -78,7 +82,7 @@ Unique indexes on (`teamId`, `personId`) and (`teamId`, `number`). `teamId` uses
 | `seasonId`          | INTEGER FK | Required; references `seasons.id`                           |
 | `gameDate`          | DATE       | Required                                                    |
 | `startTime`         | TIME       | Required                                                    |
-| `location`          | STRING(50) | Required; trimmed; at most 50 characters                    |
+| `location`          | STRING(50) | Optional; trimmed; at most 50 characters; `null` when empty |
 | `homeTeamId`        | INTEGER FK | Required; references `teams.id`                             |
 | `visitingTeamId`    | INTEGER FK | Required; references `teams.id`                             |
 | `homeTeamScore`     | INTEGER    | Optional; when present, integer 0–999                       |

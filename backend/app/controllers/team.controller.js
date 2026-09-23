@@ -52,32 +52,55 @@ exports.findAll = async (req, res) => {
   }
 };
 
+const parseTeamFields = ({ name, leagueId, homeField }) => {
+  if (
+    !name?.trim() ||
+    leagueId === undefined ||
+    leagueId === null ||
+    leagueId === "" ||
+    !homeField?.toString().trim()
+  ) {
+    return { error: { message: "Required" } };
+  }
+
+  if (name.trim().length > 50) {
+    return { error: { message: "Team name must be 50 characters or fewer." } };
+  }
+
+  if (homeField.trim().length > 50) {
+    return { error: { message: "Home field must be 50 characters or fewer." } };
+  }
+
+  const parsedLeagueId = parseInt(leagueId, 10);
+  if (Number.isNaN(parsedLeagueId)) {
+    return { error: { message: "League not found." } };
+  }
+
+  return {
+    values: {
+      name: name.trim(),
+      leagueId: parsedLeagueId,
+      homeField: homeField.trim(),
+    },
+  };
+};
+
 exports.create = async (req, res) => {
   try {
-    const { name, leagueId } = req.body;
-
-    if (!name?.trim() || leagueId === undefined || leagueId === null || leagueId === "") {
-      return res.status(400).send({ message: "Required" });
+    const fields = parseTeamFields(req.body);
+    if (fields.error) {
+      return res.status(400).send(fields.error);
     }
 
-    if (name.trim().length > 50) {
-      return res.status(400).send({
-        message: "Team name must be 50 characters or fewer.",
-      });
-    }
+    const { name, leagueId, homeField } = fields.values;
 
-    const parsedLeagueId = parseInt(leagueId, 10);
-    if (Number.isNaN(parsedLeagueId)) {
-      return res.status(400).send({ message: "League not found." });
-    }
-
-    const league = await db.league.findByPk(parsedLeagueId);
+    const league = await db.league.findByPk(leagueId);
     if (!league) {
       return res.status(400).send({ message: "League not found." });
     }
 
     const existing = await db.team.findOne({
-      where: { leagueId: parsedLeagueId, name: name.trim() },
+      where: { leagueId, name },
     });
     if (existing) {
       return res.status(400).send({
@@ -86,8 +109,9 @@ exports.create = async (req, res) => {
     }
 
     const created = await db.team.create({
-      name: name.trim(),
-      leagueId: parsedLeagueId,
+      name,
+      leagueId,
+      homeField,
     });
 
     return res.status(201).send(await findTeam(created.id));
@@ -100,7 +124,6 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const teamId = parseInt(req.params.teamId ?? req.body.teamId, 10);
-    const { name, leagueId } = req.body;
 
     if (Number.isNaN(teamId)) {
       return res.status(400).send({ message: "Invalid team id." });
@@ -113,28 +136,20 @@ exports.update = async (req, res) => {
       });
     }
 
-    if (!name?.trim() || leagueId === undefined || leagueId === null || leagueId === "") {
-      return res.status(400).send({ message: "Required" });
+    const fields = parseTeamFields(req.body);
+    if (fields.error) {
+      return res.status(400).send(fields.error);
     }
 
-    if (name.trim().length > 50) {
-      return res.status(400).send({
-        message: "Team name must be 50 characters or fewer.",
-      });
-    }
+    const { name, leagueId, homeField } = fields.values;
 
-    const parsedLeagueId = parseInt(leagueId, 10);
-    if (Number.isNaN(parsedLeagueId)) {
-      return res.status(400).send({ message: "League not found." });
-    }
-
-    const league = await db.league.findByPk(parsedLeagueId);
+    const league = await db.league.findByPk(leagueId);
     if (!league) {
       return res.status(400).send({ message: "League not found." });
     }
 
     const duplicate = await db.team.findOne({
-      where: { leagueId: parsedLeagueId, name: name.trim() },
+      where: { leagueId, name },
     });
     if (duplicate && duplicate.id !== teamId) {
       return res.status(400).send({
@@ -144,8 +159,9 @@ exports.update = async (req, res) => {
 
     await db.team.update(
       {
-        name: name.trim(),
-        leagueId: parsedLeagueId,
+        name,
+        leagueId,
+        homeField,
       },
       { where: { id: teamId } }
     );

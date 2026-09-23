@@ -129,15 +129,18 @@ describe("Feature 6 — Game Management", () => {
       const { token } = await registerAdmin(app);
       await createGame(app, token);
       const laterSeason = await createSeason(app, token, { name: "2026 Spring" });
-      const homeTeam = await db.team.findOne({ where: { name: "OKC Strikers" } });
       const visitingTeam = await db.team.findOne({ where: { name: "Tulsa FC" } });
+      const northTeam = await createTeam(app, token, {
+        name: "North United",
+        homeField: "North Field",
+        leagueId: laterSeason.body.leagueId,
+      });
       await createGame(app, token, {
         seasonId: laterSeason.body.id,
-        homeTeamId: homeTeam.id,
+        homeTeamId: northTeam.body.id,
         visitingTeamId: visitingTeam.id,
         gameDate: "2026-03-12",
         startTime: "10:00",
-        location: "North Field",
       });
 
       const response = await request(app)
@@ -165,7 +168,7 @@ describe("Feature 6 — Game Management", () => {
           seasonId: created.body.seasonId,
           gameDate: "2026-09-13",
           startTime: "19:00",
-          location: "Memorial Field",
+          location: "North Field",
           homeTeamId: created.body.homeTeamId,
           visitingTeamId: created.body.visitingTeamId,
           homeTeamScore: 2,
@@ -178,6 +181,7 @@ describe("Feature 6 — Game Management", () => {
       expect(stored.homeTeamScore).toBe(2);
       expect(stored.visitingTeamScore).toBe(1);
       expect(stored.gameDate).toBe("2026-09-13");
+      expect(stored.location).toBe("North Field");
     });
   });
 

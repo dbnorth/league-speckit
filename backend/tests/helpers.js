@@ -49,6 +49,9 @@ export const validSeason = (overrides = {}) => ({
   name: "2026 Fall",
   startDate: "2026-08-15",
   endDate: "2026-12-15",
+  gameDays: ["saturday"],
+  gameTime: "18:00",
+  minDaysBetweenGames: 7,
   ...overrides,
 });
 
@@ -102,6 +105,7 @@ export const createPerson = async (app, token, overrides = {}) => {
 
 export const validTeam = (overrides = {}) => ({
   name: "OKC Strikers",
+  homeField: "Memorial Field",
   ...overrides,
 });
 
@@ -125,10 +129,15 @@ export const createPlayer = async (app, token, teamId, overrides = {}) => {
     .send(validPlayer(overrides));
 };
 
+export const createSeasonGames = (app, token, seasonId) => {
+  return request(app)
+    .post(`/league/seasons/${seasonId}/games`)
+    .set(authHeader(token));
+};
+
 export const validGame = (overrides = {}) => ({
   gameDate: "2026-09-12",
   startTime: "18:00",
-  location: "Memorial Field",
   ...overrides,
 });
 

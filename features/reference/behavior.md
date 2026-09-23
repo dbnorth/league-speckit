@@ -47,7 +47,9 @@
 | Games are a shared catalog (no owner `userId`) | Ignore client `userId`; table has no ownership column | Feature 6 |
 | Any authenticated role may `GET` games | `authenticate` on `GET /league/games` | Feature 6 |
 | Only `admin` may create, update, or delete games | `authenticateAdmin` on `POST` / `PUT` / `DELETE` → `403` `{ "message": "Admin role required." }` | Feature 6 |
-| Game requires season, date, start time, location, home team, and visiting team | Client rules + API `400` | Feature 6 |
+| Game requires season, date, start time, home team, and visiting team | Client rules + API `400` | Feature 6 |
+| Game location on create comes from the home team's home field | `homeField` copied to `location` | Feature 5 / 6 |
+| Game location can still be changed on Edit Game | Optional `location`; max 50 when present | Feature 6 |
 | Home and visiting teams must be different and in the season's league | API `400` | Feature 6 |
 | Scores are optional integers 0–999 | Client rules + API `400` `"Score must be between 0 and 999."` | Feature 6 |
 | Cannot delete a season that still has games | API `400` `"Cannot delete season: games still exist."` | Feature 6 |
@@ -60,4 +62,12 @@
 | Season view heading shows name, league, start date, and end date | `Season.vue` heading area | Feature 7 |
 | Season view lists only that season's games | Filter `GET /league/games` by `seasonId` | Feature 7 |
 | **Add Games** on the season view defaults `seasonId` | Add Game dialog opens with this season selected | Feature 7 |
+| Season view game rows open **Edit Game** | **Edit game** icon; `PUT /league/games/:gameId` | Feature 7 |
 | Unauthenticated `/seasons/:seasonId` redirects to login | Router `beforeEach` | Feature 7 |
+| Season stores game days, game time, and min days between games | Required on season create/update | Feature 8 |
+| **Create Games** builds a home-and-away schedule for the season's league | `POST /league/seasons/:seasonId/games` | Feature 8 |
+| Generated games use season game days, time, and date range | Scheduler + Feature 6 game rows | Feature 8 |
+| A team's generated games honor the minimum gap and no back-to-back rematch | Scheduler constraints | Feature 8 |
+| Create-games is all-or-nothing | `400` `"Season is not long enough to schedule all games."` and no rows | Feature 8 |
+| Create-games needs 3+ teams and an empty season | `400` quoted messages | Feature 8 |
+| Only admin may generate season games | `authenticateAdmin` on create-games | Feature 8 |

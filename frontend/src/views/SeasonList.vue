@@ -13,6 +13,9 @@ const emptyForm = () => ({
   startDate: "",
   endDate: "",
   leagueId: null,
+  gameDays: [],
+  gameTime: "",
+  minDaysBetweenGames: "",
 });
 
 const seasons = ref([]);
@@ -72,6 +75,9 @@ const openEditDialog = (season) => {
     startDate: toDateInputValue(season.startDate),
     endDate: toDateInputValue(season.endDate),
     leagueId: season.leagueId ?? null,
+    gameDays: Array.isArray(season.gameDays) ? [...season.gameDays] : [],
+    gameTime: String(season.gameTime ?? "").slice(0, 5),
+    minDaysBetweenGames: season.minDaysBetweenGames ?? "",
   };
   formError.value = "";
   formDialogOpen.value = true;
@@ -98,6 +104,9 @@ const saveSeason = async () => {
     startDate: form.value.startDate,
     endDate: form.value.endDate,
     leagueId: form.value.leagueId,
+    gameDays: form.value.gameDays,
+    gameTime: form.value.gameTime,
+    minDaysBetweenGames: Number(form.value.minDaysBetweenGames),
   };
 
   try {
@@ -241,7 +250,7 @@ onMounted(retrieveSeasons);
       </v-card-text>
     </v-card>
 
-    <v-dialog v-model="formDialogOpen" max-width="520">
+    <v-dialog v-model="formDialogOpen" max-width="560">
       <v-card rounded="lg">
         <v-card-title>{{ formTitle }}</v-card-title>
         <v-card-text>

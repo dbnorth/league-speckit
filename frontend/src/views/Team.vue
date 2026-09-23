@@ -12,6 +12,7 @@ const route = useRoute();
 const emptyTeamForm = () => ({
   name: "",
   leagueId: null,
+  homeField: "",
 });
 
 const emptyPlayerForm = () => ({
@@ -90,6 +91,7 @@ const openEditDialog = () => {
   form.value = {
     name: team.value.name ?? "",
     leagueId: team.value.leagueId ?? null,
+    homeField: team.value.homeField ?? "",
   };
   formError.value = "";
   formDialogOpen.value = true;
@@ -114,6 +116,7 @@ const saveTeam = async () => {
     await teamServices.updateteam(team.value.id, {
       name: form.value.name.trim(),
       leagueId: form.value.leagueId,
+      homeField: form.value.homeField.trim(),
       teamId: team.value.id,
     });
     closeFormDialog();
@@ -234,6 +237,9 @@ watch(() => route.params.teamId, retrieveTeam);
           {{ team.league?.name }}
           <template v-if="team.league?.sport">
             · {{ team.league.sport }}
+          </template>
+          <template v-if="team.homeField">
+            · {{ team.homeField }}
           </template>
         </v-card-subtitle>
         <template #append>

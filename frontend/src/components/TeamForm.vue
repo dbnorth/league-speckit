@@ -21,6 +21,12 @@ const nameRules = [
     "Team name must be 50 characters or fewer.",
 ];
 const leagueRules = [(value) => !!value || "Required"];
+const homeFieldRules = [
+  (value) => !!value?.trim() || "Required",
+  (value) =>
+    (value?.trim().length ?? 0) <= 50 ||
+    "Home field must be 50 characters or fewer.",
+];
 
 const validate = () => formRef.value.validate();
 
@@ -45,6 +51,13 @@ defineExpose({ validate });
       density="comfortable"
       :rules="leagueRules"
       @update:model-value="updateField('leagueId', $event)"
+    />
+    <v-text-field
+      :model-value="modelValue.homeField"
+      label="Home Field"
+      density="comfortable"
+      :rules="homeFieldRules"
+      @update:model-value="updateField('homeField', $event)"
     />
   </v-form>
 </template>

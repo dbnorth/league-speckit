@@ -41,6 +41,16 @@
 **Independent test:** On the season view, click **Add Games**; the add-game dialog opens with this season selected  
 **Acceptance scenarios:** see ### US-7.3 under Acceptance Criteria
 
+### US-7.5: Edit a game from the season view
+
+**As a** signed-in admin user  
+**I want** an edit icon on each game in the season games list  
+**So that** I can open the Feature 6 **Edit Game** dialog without leaving the season view
+
+**Priority:** P1  
+**Independent test:** On the season view, click **Edit game**; the edit dialog opens with that game's values  
+**Acceptance scenarios:** see ### US-7.5 under Acceptance Criteria
+
 ### US-7.4: Restrict the season view to admins
 
 **As the** application  
@@ -58,13 +68,14 @@
 - **FR-001**: This feature MUST add a **season view** in `Season.vue` at route name `season`, path `/seasons/:seasonId`. The seasons list remains `SeasonList.vue` at `/seasons`.
 - **FR-002**: The seasons list MUST keep Feature 2 create / edit / delete dialogs. Each season row MUST add an **Open season** icon action that navigates to `/seasons/:seasonId`. Season name MUST stay plain text (not a link).
 - **FR-003**: The season view MUST have a **heading area** with season info: season **name**, **league** name, **start date**, and **end date**.
-- **FR-004**: The season view MUST list **only games whose `seasonId` matches this season**. Columns: **date**, **start time**, **location**, **home team**, **visiting team**, **home score**, **visiting score**. Rows MUST stay ordered by `gameDate`, then `startTime` (Feature 6 FR-006).
+- **FR-004**: The season view MUST list **only games whose `seasonId` matches this season**. Columns: **date**, **start time**, **location**, **home team**, **visiting team**, **home score**, **visiting score**, and **actions**. Rows MUST stay ordered by `gameDate`, then `startTime` (Feature 6 FR-006). Each game row MUST show an **Edit game** icon (`mdi-pencil`, `aria-label="Edit game"`) that opens the Feature 6 **Edit Game** dialog pre-filled with that game.
 - **FR-005**: The season view MUST show **Add Games** (`oc-cta`). That button MUST open the Feature 6 **Add Game** dialog with `seasonId` already set to this season.
-- **FR-006**: Creating a game from the season view MUST use `POST /league/games` and Feature 6 field rules (required fields, location length, home ≠ visiting, both teams in the season's league, optional scores 0–999). After a successful create, the dialog MUST close and the new game MUST appear in this season's game list.
+- **FR-006**: Creating a game from the season view MUST use `POST /league/games` and Feature 6 field rules (required fields, home ≠ visiting, both teams in the season's league, optional scores 0–999). Location is not collected on create. After a successful create, the dialog MUST close and the new game MUST appear in this season's game list.
 - **FR-007**: Empty games list copy MUST be **"No games yet. Add the first game."** Unknown `seasonId` MUST show **"Season with id=<id> not found."**
 - **FR-008**: Unauthenticated navigation to `/seasons/:seasonId` MUST redirect to `login`. Students MUST NOT see **Seasons** in `MenuBar` (Feature 2). This feature MUST NOT add a second `MenuBar` item.
-- **FR-009**: This feature MUST NOT add a `games` table, new game fields, or new game endpoints. Reuse Feature 6 `GET /league/games`, `POST /league/games`, `GET /league/seasons`, and `GET /league/teams`. Filter games on the client by `seasonId`.
-- **FR-010**: Feature 6 **Games** catalog at `/games` MUST remain. Edit and delete of games stay on that catalog unless a later feature moves them.
+- **FR-009**: This feature MUST NOT add a `games` table, new game fields, or new game endpoints. Reuse Feature 6 `GET /league/games`, `POST /league/games`, `PUT /league/games/:gameId`, `GET /league/seasons`, and `GET /league/teams`. Filter games on the client by `seasonId`.
+- **FR-010**: Feature 6 **Games** catalog at `/games` MUST remain. Delete of games stays on that catalog unless a later feature moves it.
+- **FR-011**: Saving an edit from the season view MUST use `PUT /league/games/:gameId` and Feature 6 edit rules, including optional **Location**. After a successful save, the dialog MUST close and the season games list MUST refresh.
 
 ---
 
@@ -73,7 +84,7 @@
 - Features 1–6 MUST be merged to `dev` before implementing this feature.
 - A season view is the same idea as Feature 5's team view: list row opens a dedicated page; mutations stay in dialogs.
 - Season info in the heading comes from the existing season object (including nested `league`).
-- **Add Games** uses the existing `GameForm` fields. Season is pre-filled; the user still enters date, start time, location, home team, and visiting team.
+- **Add Games** uses the existing `GameForm` create fields. Season is pre-filled; the user still enters date, start time, home team, and visiting team. Location is not on create.
 - Teams shown in the add-game dialog still come from `GET /league/teams`. Feature 6 server rules still reject a team that is not in this season's league.
 - No `GET /league/seasons/:seasonId` is required. The view MAY load `GET /league/seasons` and `GET /league/games` and select the matching rows (same pattern as `Team.vue`).
 - Feature 2 list edit / delete stay on the seasons list. This feature does not move **Edit Season** onto the season view.
@@ -83,7 +94,7 @@
 - Season with zero games → **"No games yet. Add the first game."**
 - Unknown `seasonId` → **"Season with id=<id> not found."**
 - **Add Games** with a missing required field → **"Required"**; no `POST`.
-- **Add Games** with a location longer than 50 characters → **"Location must be 50 characters or fewer."**; no `POST`.
+- **Add Games** with a missing required Feature 6 create field → **"Required"**; no `POST`.
 - Unauthenticated `/seasons/:seasonId` → redirect to `login`.
 - Game created from this view for a different season (user changes the pre-filled season) → stored under that season; it MUST NOT stay on this season's list.
 
@@ -140,16 +151,17 @@ Feature 2 list, with this change:
 
 - **Heading area** shows season info: season **name**, **league** name, **start date**, and **end date**.
 - Heading action: **Add Games** (`oc-cta`) opens the **Add Game** `<v-dialog>` with `seasonId` set to this season.
-- **Add Game** fields and validation are Feature 6 (season, date, start time, location, home team, visiting team, optional scores). Season is pre-filled.
+- **Add Game** fields and validation are Feature 6 create fields (season, date, start time, home team, visiting team, optional scores). Season is pre-filled. Location is set later on **Edit Game** (Feature 6).
 - **Add Game** actions: **Create** (`oc-cta`) / **Cancel** (secondary). After a successful create, the dialog closes and the games list refreshes.
-- **Games list:** `v-table` (or `v-list`); columns **date**, **start time**, **location**, **home team**, **visiting team**, **home score**, **visiting score**. Do not repeat the season column. Rows ordered by date then start time.
+- **Games list:** `v-table` (or `v-list`); columns **date**, **start time**, **location**, **home team**, **visiting team**, **home score**, **visiting score**, **actions**. Do not repeat the season column. Rows ordered by date then start time.
+- Row action **Edit game** — `mdi-pencil`; opens **Edit Game** `<v-dialog>` pre-filled with current data; **Save Game** (`oc-cta`) / **Cancel** (secondary). **Location** is shown on edit (Feature 6).
 - **Empty games:** **"No games yet. Add the first game."**
 - **Loading state:** skeleton or progress indicator while season and games are fetching.
 - **Error state:** `<v-alert type="error">` for API failures. Unknown `seasonId` shows **"Season with id=<id> not found."**
 - Admin-only: `/seasons/:seasonId` is for signed-in admin users. Unauthenticated navigation redirects to `login`.
 - Game add dialog lives in `Season.vue` (reuse `GameForm.vue`). No sidebar/main split.
 - This view does not add **Edit Season**. Feature 2 edit stays on the seasons list.
-- This view does not add edit / delete game row actions. Feature 6 `/games` remains the game catalog for those actions.
+- This view does not add delete game row actions. Feature 6 `/games` remains the catalog for delete.
 
 **App chrome**
 
@@ -245,10 +257,10 @@ No schema change. Existing Feature 2 `seasons` and Feature 6 `games` (`games.sea
 - **And** I am viewing the season view for `2026 Fall`
 - **And** teams `OKC Strikers` and `Tulsa FC` exist in that season's league
 - **When** I click **Add Games**
-- **And** I enter date `2026-09-12`, start time `18:00`, location `Memorial Field`, home team `OKC Strikers`, and visiting team `Tulsa FC`
+- **And** I enter date `2026-09-12`, start time `18:00`, home team `OKC Strikers`, and visiting team `Tulsa FC`
 - **And** I click **Create**
 - **Then** the API is called with `seasonId` for `2026 Fall`
-- **And** `Memorial Field` appears in the season games list
+- **And** `OKC Strikers` appears in the season games list
 - **And** the add-game dialog closes
 
 #### Scenario: User creates a game from the season view with a missing required field
@@ -260,6 +272,38 @@ No schema change. Existing Feature 2 `seasons` and Feature 6 `games` (`games.sea
 - **And** I click **Create**
 - **Then** no API call is made
 - **And** I see the message **"Required"**
+
+---
+
+### US-7.5 — Edit a game from the season view
+
+#### Scenario: Season view game rows show an edit action
+
+- **Given** I am signed in as a user with role `admin`
+- **And** I am viewing the season view for `2026 Fall`
+- **And** that season has a game
+- **Then** an **Edit game** action is shown on the game row
+
+#### Scenario: User selects to edit a game from the season view
+
+- **Given** I am signed in as a user with role `admin`
+- **And** I am viewing the season view for `2026 Fall`
+- **And** that season has a game
+- **When** I click **Edit game**
+- **Then** the edit-game dialog is displayed
+- **And** the game's current values are shown
+
+#### Scenario: User edits a game from the season view
+
+- **Given** I am signed in as a user with role `admin`
+- **And** I am viewing the season view for `2026 Fall`
+- **And** that season has a game
+- **And** the game edit dialog is displayed
+- **When** I update location to `North Field`
+- **And** I click **Save Game**
+- **Then** the API updates that game
+- **And** `North Field` appears in the season games list
+- **And** the edit-game dialog closes
 
 ---
 
@@ -286,6 +330,9 @@ No schema change. Existing Feature 2 `seasons` and Feature 6 `games` (`games.sea
 | US-7.3 | User selects to add a game from the season view             | `frontend/tests/Seasons.test.js`                | `User selects to add a game from the season view`            |
 | US-7.3 | User creates a game from the season view                    | `frontend/tests/Seasons.test.js`                | `User creates a game from the season view`                   |
 | US-7.3 | User creates a game from the season view with a missing required field | `frontend/tests/Seasons.test.js`   | `User creates a game from the season view with a missing required field` |
+| US-7.5 | Season view game rows show an edit action                   | `frontend/tests/Seasons.test.js`                | `Season view game rows show an edit action`                  |
+| US-7.5 | User selects to edit a game from the season view            | `frontend/tests/Seasons.test.js`                | `User selects to edit a game from the season view`           |
+| US-7.5 | User edits a game from the season view                      | `frontend/tests/Seasons.test.js`                | `User edits a game from the season view`                     |
 | US-7.4 | Unauthenticated user navigates to a season                  | `frontend/tests/router.test.js`                 | `Unauthenticated user navigates to a season`                 |
 
 ---
@@ -323,7 +370,7 @@ Do not implement behavior not in this spec.
 ## Out of Scope
 
 - New game fields or game endpoints (Feature 6)
-- Edit or delete games from the season view (Feature 6 `/games`)
+- Delete games from the season view (Feature 6 `/games`)
 - Moving **Edit Season** onto the season view
 - Student-facing season or schedule UI
 - Standings or filtering games by team
@@ -335,3 +382,4 @@ Do not implement behavior not in this spec.
 ## Delivered to later features
 
 - The seasons list now opens `Season.vue`. A later feature MAY add **Edit Season** or game row actions on that view; it MUST NOT create a second seasons `MenuBar` item.
+- [Feature 8](feature-8-create-season-games.md) adds **Create Games** on this view to generate the season schedule.
