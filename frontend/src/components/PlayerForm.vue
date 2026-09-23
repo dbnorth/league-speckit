@@ -59,19 +59,19 @@ defineExpose({ validate });
       @update:model-value="updateField('personId', $event)"
     />
     <v-text-field
-      :model-value="modelValue.position"
-      label="Position"
-      density="comfortable"
-      :rules="positionRules"
-      @update:model-value="updateField('position', $event)"
-    />
-    <v-text-field
       :model-value="modelValue.number"
       label="Number"
       type="number"
       density="comfortable"
       :rules="numberRules"
       @update:model-value="updateField('number', $event)"
+    />
+    <v-text-field
+      :model-value="modelValue.position"
+      label="Position"
+      density="comfortable"
+      :rules="positionRules"
+      @update:model-value="updateField('position', $event)"
     />
   </v-form>
 </template>

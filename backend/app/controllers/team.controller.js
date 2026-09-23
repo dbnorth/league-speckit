@@ -171,6 +171,17 @@ exports.remove = async (req, res) => {
       });
     }
 
+    const gameCount = await db.game.count({
+      where: {
+        [db.Sequelize.Op.or]: [{ homeTeamId: teamId }, { visitingTeamId: teamId }],
+      },
+    });
+    if (gameCount > 0) {
+      return res.status(400).send({
+        message: "Cannot delete team: games still exist.",
+      });
+    }
+
     await db.player.destroy({ where: { teamId } });
     await db.team.destroy({ where: { id: teamId } });
 

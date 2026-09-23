@@ -1,8 +1,8 @@
 {
-  "name": "course-speckit-backend",
+  "name": "league-speckit-backend",
   "version": "1.0.0",
   "type": "module",
-  "description": "Courses Speckit — Node.js REST API",
+  "description": "League Speckit — Node.js REST API",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

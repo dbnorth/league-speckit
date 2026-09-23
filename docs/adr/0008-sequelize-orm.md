@@ -14,7 +14,7 @@ Constraints:
 2. **ES modules** — Same `"type": "module"` style as the rest of Speckit.
 3. **Ownership queries** — Easy `where: { userId: req.user.id }` patterns for ADR-0002.
 4. **Classroom sync** — Dev `sync({ alter: true })` and test `sync({ force: true })` without requiring migration files in v1.
-5. **Course continuity** — Speckit Cursor rules (`api-conventions.mdc`) already encode Sequelize model/route patterns.
+5. **Speckit continuity** — Speckit Cursor rules (`api-conventions.mdc`) already encode Sequelize model/route patterns.
 
 ## Decision
 
@@ -63,7 +63,7 @@ controllers / auth helpers (userId in WHERE)
 
 | Option | Why not |
 |--------|---------|
-| **Prisma** | Strong DX and migrations; would rewrite all models, rules, and course materials already Sequelize-based. |
+| **Prisma** | Strong DX and migrations; would rewrite all models, rules, and Speckit materials already Sequelize-based. |
 | **Knex / Objection** | Flexible query builder; less “model file ↔ spec entity” clarity for SDD beginners. |
 | **TypeORM** | Common in Nest/TS stacks; Speckit is JS + Express without requiring TypeScript. |
 | **Raw `mysql2` only** | More boilerplate for associations, sync, and consistent `userId` filters; weaker agent consistency. |

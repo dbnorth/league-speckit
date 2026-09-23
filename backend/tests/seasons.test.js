@@ -12,6 +12,7 @@ import {
   authHeader,
   validSeason,
   createSeason,
+  createGame,
 } from "./helpers.js";
 
 describe("Feature 2 — Season Management", () => {
@@ -29,6 +30,7 @@ describe("Feature 2 — Season Management", () => {
         name: "2026 Fall",
       });
       expect(response.body.id).toEqual(expect.any(Number));
+      expect(response.body.leagueId).toEqual(expect.any(Number));
       expect(response.body.startDate).toBeDefined();
       expect(response.body.endDate).toBeDefined();
 
@@ -43,10 +45,21 @@ describe("Feature 2 — Season Management", () => {
       const response = await createSeason(app, token);
 
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({ message: "Season name is already taken." });
+      expect(response.body).toEqual({
+        message: "Season name is already taken in this league.",
+      });
 
       const count = await db.season.count({ where: { name: "2026 Fall" } });
       expect(count).toBe(1);
+    });
+
+    it("User creates a season with an unknown league", async () => {
+      const { token } = await registerAdmin(app);
+      const response = await createSeason(app, token, { leagueId: 9999 });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({ message: "League not found." });
+      expect(await db.season.count()).toBe(0);
     });
   });
 
@@ -61,7 +74,7 @@ describe("Feature 2 — Season Management", () => {
       });
 
       const response = await request(app)
-        .get("/courses/seasons")
+        .get("/league/seasons")
         .set(authHeader(token));
 
       expect(response.status).toBe(200);
@@ -79,13 +92,14 @@ describe("Feature 2 — Season Management", () => {
       const created = await createSeason(app, token);
 
       const response = await request(app)
-        .put(`/courses/seasons/${created.body.id}`)
+        .put(`/league/seasons/${created.body.id}`)
         .set(authHeader(token))
         .send({
           seasonId: created.body.id,
           name: "2027 Spring",
           startDate: "2027-01-10",
           endDate: "2027-04-30",
+          leagueId: created.body.leagueId,
         });
 
       expect(response.status).toBe(200);
@@ -101,7 +115,7 @@ describe("Feature 2 — Season Management", () => {
       const created = await createSeason(app, token);
 
       const response = await request(app)
-        .delete(`/courses/seasons/${created.body.id}`)
+        .delete(`/league/seasons/${created.body.id}`)
         .set(authHeader(token));
 
       expect(response.status).toBe(200);
@@ -122,7 +136,7 @@ describe("Feature 2 — Season Management", () => {
       });
 
       const response = await request(app)
-        .get("/courses/seasons")
+        .get("/league/seasons")
         .set(authHeader(student.body.token));
 
       expect(response.status).toBe(200);
@@ -137,7 +151,7 @@ describe("Feature 2 — Season Management", () => {
       });
 
       const response = await request(app)
-        .post("/courses/seasons")
+        .post("/league/seasons")
         .set(authHeader(student.body.token))
         .send(validSeason());
 
@@ -147,10 +161,42 @@ describe("Feature 2 — Season Management", () => {
     });
 
     it("Unauthenticated API request to seasons", async () => {
-      const response = await request(app).get("/courses/seasons");
+      const response = await request(app).get("/league/seasons");
 
       expect(response.status).toBe(401);
       expect(response.body.message).toMatch(/Unauthorized/i);
+    });
+
+    it("User cannot delete a season that has a game", async () => {
+      const { token } = await registerAdmin(app);
+      const created = await createGame(app, token);
+
+      const response = await request(app)
+        .delete(`/league/seasons/${created.body.seasonId}`)
+        .set(authHeader(token));
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: "Cannot delete season: games still exist.",
+      });
+      expect(await db.season.findByPk(created.body.seasonId)).not.toBeNull();
+      expect(await db.game.findByPk(created.body.id)).not.toBeNull();
+    });
+
+    it("User cannot delete a league that has a season", async () => {
+      const { token } = await registerAdmin(app);
+      const created = await createSeason(app, token);
+
+      const response = await request(app)
+        .delete(`/league/leagues/${created.body.leagueId}`)
+        .set(authHeader(token));
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: "Cannot delete league: seasons still exist.",
+      });
+      expect(await db.league.findByPk(created.body.leagueId)).not.toBeNull();
+      expect(await db.season.findByPk(created.body.id)).not.toBeNull();
     });
   });
 });

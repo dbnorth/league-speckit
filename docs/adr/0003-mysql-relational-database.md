@@ -87,7 +87,7 @@ No checked-in Sequelize migration files in v1 — schema is defined in `backend/
 - MySQL ships with XAMPP — low friction for local full-stack development.
 - Sequelize models map cleanly to SDD **Data Model Requirements** sections in feature specs.
 - Separate test database prevents dev data loss during `force: true` test sync.
-- `alter: true` in dev speeds iteration without hand-written migrations for coursework.
+- `alter: true` in dev speeds iteration without hand-written migrations during development.
 - SQL `WHERE userId = ?` aligns with [ADR-0002](./0002-security-architecture.md) authorization model.
 
 ### Negative / tradeoffs
@@ -103,10 +103,10 @@ No checked-in Sequelize migration files in v1 — schema is defined in `backend/
 | Option | Why not |
 |--------|---------|
 | **SQLite (file DB)** | Simpler setup but weaker classroom alignment with deployed MySQL; concurrent test + dev access is awkward. |
-| **PostgreSQL** | Excellent choice for production; less universal in XAMPP/LAMP developer environments for this course. |
+| **PostgreSQL** | Excellent choice for production; less universal in XAMPP/LAMP developer environments for this project. |
 | **MongoDB / document store** | Todo-in-list fits poorly without duplicating ownership; cross-user isolation harder to reason about in specs. |
 | **JSON files / in-memory store** | No real multi-user persistence; fails ADR-0001. |
-| **Prisma** | Viable ORM; rejected for Speckit in [ADR-0008](./0008-sequelize-orm.md) — Sequelize is the course standard. |
+| **Prisma** | Viable ORM; rejected for Speckit in [ADR-0008](./0008-sequelize-orm.md) — Sequelize is the Speckit standard. |
 | **Raw SQL only (no ORM)** | More boilerplate; see ADR-0008. |
 | **Single shared DB for dev and test** | Risk of wiping developer data when tests run `force: true`. |
 

@@ -16,6 +16,7 @@ import {
   createTeam,
   validPlayer,
   createPlayer,
+  createGame,
 } from "./helpers.js";
 
 describe("Feature 5 — Team Management", () => {
@@ -81,7 +82,7 @@ describe("Feature 5 — Team Management", () => {
       });
 
       const response = await request(app)
-        .get("/courses/teams")
+        .get("/league/teams")
         .set(authHeader(token));
 
       expect(response.status).toBe(200);
@@ -100,7 +101,7 @@ describe("Feature 5 — Team Management", () => {
       const created = await createTeam(app, token, { leagueId: league.body.id });
 
       const response = await request(app)
-        .put(`/courses/teams/${created.body.id}`)
+        .put(`/league/teams/${created.body.id}`)
         .set(authHeader(token))
         .send({
           teamId: created.body.id,
@@ -121,7 +122,7 @@ describe("Feature 5 — Team Management", () => {
       const created = await createTeam(app, token, { leagueId: league.body.id });
 
       const response = await request(app)
-        .delete(`/courses/teams/${created.body.id}`)
+        .delete(`/league/teams/${created.body.id}`)
         .set(authHeader(token));
 
       expect(response.status).toBe(200);
@@ -136,7 +137,7 @@ describe("Feature 5 — Team Management", () => {
       await createPlayer(app, token, team.body.id, { personId: person.body.id });
 
       const response = await request(app)
-        .delete(`/courses/teams/${team.body.id}`)
+        .delete(`/league/teams/${team.body.id}`)
         .set(authHeader(token));
 
       expect(response.status).toBe(200);
@@ -158,7 +159,7 @@ describe("Feature 5 — Team Management", () => {
       });
 
       const response = await request(app)
-        .get("/courses/teams")
+        .get("/league/teams")
         .set(authHeader(student.body.token));
 
       expect(response.status).toBe(200);
@@ -175,7 +176,7 @@ describe("Feature 5 — Team Management", () => {
       });
 
       const response = await request(app)
-        .post("/courses/teams")
+        .post("/league/teams")
         .set(authHeader(student.body.token))
         .send(validTeam({ leagueId: league.body.id }));
 
@@ -195,7 +196,7 @@ describe("Feature 5 — Team Management", () => {
       });
 
       const response = await request(app)
-        .post(`/courses/teams/${team.body.id}/players`)
+        .post(`/league/teams/${team.body.id}/players`)
         .set(authHeader(student.body.token))
         .send(validPlayer({ personId: person.body.id }));
 
@@ -205,7 +206,7 @@ describe("Feature 5 — Team Management", () => {
     });
 
     it("Unauthenticated API request to teams", async () => {
-      const response = await request(app).get("/courses/teams");
+      const response = await request(app).get("/league/teams");
 
       expect(response.status).toBe(401);
       expect(response.body.message).toMatch(/Unauthorized/i);
@@ -300,7 +301,7 @@ describe("Feature 5 — Team Management", () => {
       });
 
       const response = await request(app)
-        .put(`/courses/teams/${team.body.id}/players/${player.body.id}`)
+        .put(`/league/teams/${team.body.id}/players/${player.body.id}`)
         .set(authHeader(token))
         .send({
           personId: person.body.id,
@@ -324,7 +325,7 @@ describe("Feature 5 — Team Management", () => {
       });
 
       const response = await request(app)
-        .delete(`/courses/teams/${team.body.id}/players/${player.body.id}`)
+        .delete(`/league/teams/${team.body.id}/players/${player.body.id}`)
         .set(authHeader(token));
 
       expect(response.status).toBe(200);
@@ -340,7 +341,7 @@ describe("Feature 5 — Team Management", () => {
       const team = await createTeam(app, token, { leagueId: league.body.id });
 
       const response = await request(app)
-        .delete(`/courses/leagues/${league.body.id}`)
+        .delete(`/league/leagues/${league.body.id}`)
         .set(authHeader(token));
 
       expect(response.status).toBe(400);
@@ -349,6 +350,22 @@ describe("Feature 5 — Team Management", () => {
       });
       expect(await db.league.findByPk(league.body.id)).not.toBeNull();
       expect(await db.team.findByPk(team.body.id)).not.toBeNull();
+    });
+
+    it("User cannot delete a team that has a game", async () => {
+      const { token } = await registerAdmin(app);
+      const created = await createGame(app, token);
+
+      const response = await request(app)
+        .delete(`/league/teams/${created.body.homeTeamId}`)
+        .set(authHeader(token));
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: "Cannot delete team: games still exist.",
+      });
+      expect(await db.team.findByPk(created.body.homeTeamId)).not.toBeNull();
+      expect(await db.game.findByPk(created.body.id)).not.toBeNull();
     });
 
     it("User cannot delete a person who is a player", async () => {
@@ -361,7 +378,7 @@ describe("Feature 5 — Team Management", () => {
       });
 
       const response = await request(app)
-        .delete(`/courses/people/${person.body.id}`)
+        .delete(`/league/people/${person.body.id}`)
         .set(authHeader(token));
 
       expect(response.status).toBe(400);

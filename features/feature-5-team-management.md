@@ -4,7 +4,7 @@
 **Branch pattern:** `feature/5-team-management`
 **Status:** Ready
 **Created:** 2026-02-01
-**Input:** Signed-in admin users manage teams on one screen. A team has a name, belongs to a league, and has players. A player is a Feature 4 person on that team with a position and number.
+**Input:** Signed-in admin users manage a teams list and a team view. A team has a name, belongs to a league, and has players. The team view shows team info, **Edit team**, **Add Players**, and a player list. A player is a Feature 4 person on that team with a name, number, and position.
 **Depends on:** [Feature 1 — User Authentication](feature-1-user-auth.md), [Feature 2 — Season Management](feature-2-season-management.md), [Feature 3 — League Management](feature-3-league-management.md), [Feature 4 — People Management](feature-4-people-management.md)
 
 ---
@@ -44,21 +44,31 @@
 ### US-5.4: Manage team rows
 
 **As a** signed-in admin user  
-**I want** each team row to show **edit** and **delete** actions  
-**So that** I can manage teams without leaving the teams view
+**I want** each team row to show a **team** icon and a **delete** action  
+**So that** I can open a team or remove it from the list
 
 **Priority:** P1  
-**Independent test:** Each team row exposes edit and delete icon actions  
+**Independent test:** Each team row shows an **Open team** icon and a delete icon action  
 **Acceptance scenarios:** see ### US-5.4 under Acceptance Criteria
+
+### US-5.10: View a team
+
+**As a** signed-in admin user  
+**I want to** open a team view with team info, **Edit team**, **Add Players**, and the player list  
+**So that** I can work with one team's roster
+
+**Priority:** P1  
+**Independent test:** From the teams list, open a team; heading shows team info and the player list  
+**Acceptance scenarios:** see ### US-5.10 under Acceptance Criteria
 
 ### US-5.5: Edit a team
 
 **As a** signed-in admin user  
-**I want to** edit a team's name or league  
+**I want to** edit a team's name or league from the team view  
 **So that** I can keep team data accurate
 
 **Priority:** P2  
-**Independent test:** Edit a team from row actions; teams view updates  
+**Independent test:** On the team view, **Edit team** opens the Edit Team dialog; save updates the heading  
 **Acceptance scenarios:** see ### US-5.5 under Acceptance Criteria
 
 ### US-5.6: Delete a team
@@ -78,17 +88,17 @@
 **So that** students cannot create, edit, or delete teams or roster rows
 
 **Priority:** P1  
-**Independent test:** Sign in as a student — **Teams** is hidden; `POST /courses/teams` returns `403`  
+**Independent test:** Sign in as a student — **Teams** is hidden; `POST /league/teams` returns `403`  
 **Acceptance scenarios:** see ### US-5.7 under Acceptance Criteria
 
 ### US-5.8: Manage team players
 
 **As a** signed-in admin user  
-**I want to** add, edit, and remove players on a team  
-**So that** each player is a person with a position and number on that team
+**I want to** add and edit players on the team view  
+**So that** each player is a person with a name, number, and position on that team
 
 **Priority:** P1  
-**Independent test:** On an existing team, add a person as a player with position and number; the player appears on the team  
+**Independent test:** On the team view, **Add Players** opens the Add Player dialog; the player appears in the list  
 **Acceptance scenarios:** see ### US-5.8 under Acceptance Criteria
 
 ### US-5.9: Block delete of referenced league or person
@@ -109,9 +119,9 @@
 - **FR-002**: Teams and players MUST be a **shared catalog**. The `teams` and `players` tables MUST NOT use `userId` as ownership. The API MUST ignore any client-supplied ownership `userId`.
 - **FR-003**: Authenticated non-admin users (including `student`) MUST receive `403` with `{ "message": "Admin role required." }` on `POST`, `PUT`, and `DELETE`. `GET` MUST return `200` for any authenticated user. They MUST NOT see **Teams** in `MenuBar`.
 - **FR-004**: Required team and player fields MUST be present and trimmed; empty or whitespace-only values MUST be rejected (client block and/or `400`).
-- **FR-005**: Unauthenticated team API requests MUST return `401`. Unauthenticated navigation to `/teams` MUST redirect to `login`.
+- **FR-005**: Unauthenticated team API requests MUST return `401`. Unauthenticated navigation to `/teams` or `/teams/:teamId` MUST redirect to `login`.
 - **FR-006**: Teams MUST be ordered by related league `name`, then team `name`, in API responses. Players on a team MUST be ordered by `number`.
-- **FR-007**: This feature MUST deliver admin team CRUD, player (roster) CRUD, and a **single-view** team UI in `Teams.vue` (dialog-based add/edit/delete for teams and players). No sidebar/main split.
+- **FR-007**: This feature MUST deliver a **teams list** in `Teams.vue` and a **team view** in `Team.vue`. The team view MUST have a heading area for team info, an **Edit team** button that opens the **Edit Team** dialog, an **Add Players** button that opens the **Add Player** dialog, and a player list (name, number, position) with an **Edit player** icon that opens the **Edit Player** dialog. Team and player mutations stay dialog-based. No sidebar/main split. Player management MUST NOT live inside the **Edit Team** dialog.
 - **FR-008**: Team `name` MUST be required, trimmed, and at most 50 characters. Too-long message: **"Team name must be 50 characters or fewer."** The pair (`leagueId`, `name`) MUST be unique. Duplicate message: **"Team name is already taken in this league."**
 - **FR-009**: `leagueId` MUST be a required integer that exists in `leagues`. Missing league message: **"League not found."** (HTTP `400`). A league MAY have many teams.
 - **FR-010**: A player MUST belong to one team and one Feature 4 person. `teamId` comes from the route. `personId` MUST be a required integer that exists in `people`. Missing person message: **"Person not found."** (HTTP `400`). The pair (`teamId`, `personId`) MUST be unique. Duplicate-person message: **"Person is already on this team."** A person MAY be on more than one team.
@@ -130,11 +140,12 @@
 - A team MAY be created with an empty roster. Players are added in this feature.
 - A **player** is a roster row (person + position + number on a team), not a second copy of the person.
 - `position` is free text (not a closed list). Sports differ by league.
-- Add/Edit dialogs load leagues from `GET /courses/leagues` and people from `GET /courses/people`.
+- Add/Edit dialogs load leagues from `GET /league/leagues` and people from `GET /league/people`.
 - Foreign keys from `teams.leagueId` and `players.personId` MUST use **RESTRICT**. Foreign key from `players.teamId` MUST use **CASCADE** so deleting a team removes roster rows only.
-- This feature updates Feature 3–4 `DELETE` handlers for `/courses/leagues/:leagueId` and `/courses/people/:personId` to enforce FR-013.
-- Teams use **dialog-based** workflows (no split sidebar / main panel).
-- API mount for this resource is `/courses/…`. Use `/courses/teams`.
+- This feature updates Feature 3–4 `DELETE` handlers for `/league/leagues/:leagueId` and `/league/people/:personId` to enforce FR-013.
+- The **teams list** creates and deletes teams. The **team view** edits one team and manages that team's players.
+- Team and player forms use **dialog-based** workflows (no split sidebar / main panel).
+- API mount for this resource is `/league/…`. Use `/league/teams`.
 
 ## Edge Cases
 
@@ -156,13 +167,14 @@
 - `DELETE` team → team and its player rows are removed; people remain.
 - Authenticated `student` (or any non-admin) on `POST` / `PUT` / `DELETE` → `403`.
 - Authenticated `student` on `GET` → `200`.
-- Unauthenticated user on `/teams` or `GET /courses/teams` → redirect or `401`.
+- Unauthenticated user on `/teams`, `/teams/:teamId`, or `GET /league/teams` → redirect or `401`.
+- Unknown `teamId` on the team view → error **"Team with id=<id> not found."**
 
 ## Success Criteria
 
 - **SC-001**: Every Gherkin scenario has at least one automated test before merge.
-- **SC-002**: A signed-in admin can create, view, edit, and delete teams on one screen.
-- **SC-003**: A signed-in admin can add, edit, and remove players (person, position, number) on a team.
+- **SC-002**: A signed-in admin can create and delete teams on the teams list, and edit a team from the team view.
+- **SC-003**: A signed-in admin can open a team view and add or edit players (name, number, position) from that view.
 - **SC-004**: A signed-in student MAY `GET` teams and players; they cannot open the teams manager and cannot mutate teams or players via the API.
 - **SC-005**: An admin cannot delete a league that still has teams, or a person who is still on a roster.
 - **SC-006**: `npm test` passes for team and player API and teams view behavior.
@@ -175,13 +187,13 @@ Teams and players are a **shared catalog**. They are not owned by the signed-in 
 
 | Rule               | Requirement                                                                                                              |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| **Read scope**     | `GET /courses/teams` returns **all** teams (with league and players) to any authenticated user.                          |
+| **Read scope**     | `GET /league/teams` returns **all** teams (with league and players) to any authenticated user.                          |
 | **Write scope**    | `POST`, `PUT`, and `DELETE` are allowed only when `req.user.role` is `admin`.                                            |
 | **Create scope**   | New teams and players have no owner. Ignore ownership `userId` if sent in the body.                                      |
 | **Missing team**   | Unknown `teamId` → `404` with `{ "message": "Team with id=<id> not found." }`. Never use ownership `404` to hide rows.   |
 | **Missing player** | Unknown `playerId` → `404` with `{ "message": "Player with id=<id> not found." }`.                                        |
 | **Non-admin**      | Authenticated non-admin `GET` → `200`. `POST` / `PUT` / `DELETE` → `403` with `{ "message": "Admin role required." }`.   |
-| **UI scope**       | **Teams** menu and `/teams` are admin-only. Students do not see this manager.                                            |
+| **UI scope**       | **Teams** menu, `/teams`, and `/teams/:teamId` are admin-only. Students do not see this manager.                          |
 | **Implementation** | Use `authenticate` on all endpoints. Use `requireAdmin` after `authenticate` on `POST`, `PUT`, and `DELETE` only.        |
 
 ---
@@ -190,14 +202,14 @@ Teams and players are a **shared catalog**. They are not owned by the signed-in 
 
 | Method   | Endpoint                                      | Auth       | Purpose                                      |
 | -------- | --------------------------------------------- | ---------- | -------------------------------------------- |
-| `GET`    | `/courses/teams`                              | Yes        | Fetch all teams with league and players      |
-| `POST`   | `/courses/teams`                              | Yes, admin | Create a team in a league                    |
-| `PUT`    | `/courses/teams/:teamId`                      | Yes, admin | Update a team's name or league               |
-| `DELETE` | `/courses/teams/:teamId`                      | Yes, admin | Delete a team and its player rows            |
-| `GET`    | `/courses/teams/:teamId/players`              | Yes        | Fetch players on one team                    |
-| `POST`   | `/courses/teams/:teamId/players`              | Yes, admin | Add a player to a team                       |
-| `PUT`    | `/courses/teams/:teamId/players/:playerId`    | Yes, admin | Update a player's position or number         |
-| `DELETE` | `/courses/teams/:teamId/players/:playerId`    | Yes, admin | Remove a player from a team                  |
+| `GET`    | `/league/teams`                              | Yes        | Fetch all teams with league and players      |
+| `POST`   | `/league/teams`                              | Yes, admin | Create a team in a league                    |
+| `PUT`    | `/league/teams/:teamId`                      | Yes, admin | Update a team's name or league               |
+| `DELETE` | `/league/teams/:teamId`                      | Yes, admin | Delete a team and its player rows            |
+| `GET`    | `/league/teams/:teamId/players`              | Yes        | Fetch players on one team                    |
+| `POST`   | `/league/teams/:teamId/players`              | Yes, admin | Add a player to a team                       |
+| `PUT`    | `/league/teams/:teamId/players/:playerId`    | Yes, admin | Update a player's position or number         |
+| `DELETE` | `/league/teams/:teamId/players/:playerId`    | Yes, admin | Remove a player from a team                  |
 
 **Create team request body:**
 
@@ -230,7 +242,7 @@ Do not send `id` on create. Players are **not** created in this body.
 }
 ```
 
-`GET /courses/teams` returns an **array** of team objects in this shape, including each team's `players` array.
+`GET /league/teams` returns an **array** of team objects in this shape, including each team's `players` array.
 
 **Create player request body:**
 
@@ -267,7 +279,7 @@ Do not send `id` on create. Players are **not** created in this body.
 **Not found:** `404` for unknown `teamId` / `playerId`.  
 **Missing parent:** `400` (FR-009 / FR-010).
 
-This feature also changes Feature 3–4 delete APIs (FR-013): `DELETE /courses/leagues/:leagueId` and `DELETE /courses/people/:personId` MUST return `400` with the quoted FR-013 message when teams or players still reference that row.
+This feature also changes Feature 3–4 delete APIs (FR-013): `DELETE /league/leagues/:leagueId` and `DELETE /league/people/:personId` MUST return `400` with the quoted FR-013 message when teams or players still reference that row.
 
 ---
 
@@ -277,37 +289,55 @@ This feature also changes Feature 3–4 delete APIs (FR-013): `DELETE /courses/l
 
 - Heading: **Teams**
 - Primary action: **+ New team** (`oc-cta`) opens the **Add Team** `<v-dialog>`.
-- **Add Team** fields (same set on **Edit Team** for name and league, edit pre-filled):
+- **Add Team** fields:
   - **Team Name** (`v-text-field`)
   - **League** (`v-select` of existing leagues, display league `name`)
 - **Add Team** actions: **Create** (`oc-cta`) / **Cancel** (secondary `variant="text"` or `outlined`).
 - List: `v-table` (or `v-list`); columns **team name**, **league**, and **players** (count); rows ordered by league name then team name (FR-006).
+- Team name is plain text (not a link).
 - Icon-only row actions use `size="small"` and accessible `aria-label`s:
-  - **Edit team** — opens **Edit Team** `<v-dialog>` pre-filled with current name and league; **Save Team** (`oc-cta`) / **Cancel** (secondary)
+  - **Open team** — team icon (`mdi-account-group`) navigates to the **Team** view (`/teams/:teamId`)
   - **Delete team** — opens **Delete Team** confirmation `<v-dialog>` with copy **"Delete this team?"**; **Delete Team** (`oc-cta`) / **Cancel** (secondary)
-- **Edit Team** also shows that team's **players** list (last name, first name, position, number) and **+ Add player** (`oc-cta`) which opens the **Add Player** `<v-dialog>`.
-- **Add Player** fields (same set on **Edit Player**, edit pre-filled):
-  - **Person** (`v-select` of existing people, display last name, first name)
-  - **Position** (`v-text-field`)
-  - **Number** (`v-text-field` type number)
-- **Add Player** actions: **Add** (`oc-cta`) / **Cancel** (secondary).
-- Each player row in **Edit Team** has icon-only **Edit player** and **Remove player** actions:
-  - **Edit player** — opens **Edit Player** `<v-dialog>`; **Save Player** (`oc-cta`) / **Cancel** (secondary)
-  - **Remove player** — opens confirmation **"Remove this player from the team?"**; **Remove Player** (`oc-cta`) / **Cancel** (secondary)
 - Client-side validation: required fields use inline rules (`"Required"`); invalid submit does not send an API request.
 - **Empty state:** **"No teams yet. Create your first team."** when the catalog has zero teams.
-- **Empty roster:** **"No players yet. Add the first player."** when the open team has zero players.
 - **Loading state:** skeleton or progress indicator while teams are fetching.
 - **Error state:** `<v-alert type="error">` for API failures.
 - Admin-only: **Teams** menu item and `/teams` are for signed-in admin users. Other roles do not see the **Teams** item. Unauthenticated navigation to `/teams` redirects to `login`.
-- Team and player dialogs live in `Teams.vue` (or child presentational dialogs). No sidebar/main split.
+
+### [View: Team] — route name `team` — path `/teams/:teamId` — `Team.vue`
+
+This is the team view (team main).
+
+- **Heading area** shows team info: team **name** and **league** name (and sport if already on the nested `league` object).
+- Actions in the heading area:
+  - **Edit team** (`oc-cta`) opens the **Edit Team** `<v-dialog>` pre-filled with current name and league.
+  - **Add Players** (`oc-cta`) opens the **Add Player** `<v-dialog>`.
+- **Edit Team** fields (name and league only — no player list in this dialog):
+  - **Team Name** (`v-text-field`)
+  - **League** (`v-select` of existing leagues, display league `name`)
+- **Edit Team** actions: **Save Team** (`oc-cta`) / **Cancel** (secondary). After a successful save, the heading area shows the updated team info and the dialog closes.
+- **Player list:** `v-table` (or `v-list`); columns **name** (person last name, first name), **number**, and **position**; rows ordered by `number` (FR-006).
+- Each player row has an icon-only **Edit player** action (`size="small"`, `aria-label` **Edit player**) that opens the **Edit Player** `<v-dialog>` pre-filled with that player's person, number, and position.
+- **Add Player** / **Edit Player** fields (same set; edit pre-filled):
+  - **Person** (`v-select` of existing people, display last name, first name)
+  - **Number** (`v-text-field` type number)
+  - **Position** (`v-text-field`)
+- **Add Player** actions: **Add** (`oc-cta`) / **Cancel** (secondary).
+- **Edit Player** actions: **Save Player** (`oc-cta`) / **Cancel** (secondary).
+- Each player row also has **Remove player** (existing US-5.8): confirmation **"Remove this player from the team?"**; **Remove Player** (`oc-cta`) / **Cancel** (secondary).
+- Client-side validation: required fields use inline rules (`"Required"`); invalid submit does not send an API request.
+- **Empty roster:** **"No players yet. Add the first player."** when the team has zero players.
+- **Loading state:** skeleton or progress indicator while the team is fetching.
+- **Error state:** `<v-alert type="error">` for API failures. Unknown `teamId` shows **"Team with id=<id> not found."**
+- Admin-only: `/teams/:teamId` is for signed-in admin users. Unauthenticated navigation redirects to `login`.
+- Team and player dialogs live in `Team.vue` (or child presentational dialogs). **Edit Team** MUST NOT contain the player list. No sidebar/main split.
 
 **App chrome**
 
 - Use the `MenuBar` introduced in [Feature 1](feature-1-user-auth.md). Do **not** create a second `MenuBar`. Do **not** hide it on `login` / `register`.
 - Add **Teams** (allowed role `admin`; navigates to `/teams`) to `MenuBar`. Keep name, **Sign out**, **Seasons**, **Leagues**, and **People** from Features 1–4.
 - Students MUST NOT see **Teams**.
-- After login, the user remains on Feature 1 `home`. Selecting **Teams** in the menu opens this feature's view.
+- After login, the user remains on Feature 1 `home`. Selecting **Teams** in the menu opens the teams list. Opening a team from that list shows the team view.
 
 ---
 
@@ -409,7 +439,7 @@ Unique index on (`teamId`, `number`).
 
 - **Given** I am signed in as a user with role `admin`
 - **And** I am viewing the teams view
-- **When** I send `POST /courses/teams` with a `leagueId` that does not exist and otherwise valid data
+- **When** I send `POST /league/teams` with a `leagueId` that does not exist and otherwise valid data
 - **Then** the API returns `400` with `{ "message": "League not found." }`
 - **And** no team is stored
 
@@ -448,12 +478,13 @@ Unique index on (`teamId`, `number`).
 
 ### US-5.4 — Manage team rows
 
-#### Scenario: team rows show edit and delete actions
+#### Scenario: team rows open the team view and show a delete action
 
 - **Given** I am signed in as a user with role `admin`
 - **And** I am viewing the teams view
 - **When** I view a team row
-- **Then** the team row shows an **Edit team** icon action
+- **Then** the team name is not a link
+- **And** the team row shows an **Open team** icon action
 - **And** the team row shows a **Delete team** icon action
 
 ---
@@ -463,24 +494,25 @@ Unique index on (`teamId`, `number`).
 #### Scenario: User selects to edit a team
 
 - **Given** I am signed in as a user with role `admin`
-- **And** I am viewing the teams view
-- **When** I click the edit icon on a team row
+- **And** I am viewing the team view
+- **When** I click **Edit team**
 - **Then** the team edit dialog is displayed
 
 #### Scenario: User edits a team with valid values and saves
 
 - **Given** I am signed in as a user with role `admin`
-- **And** I am viewing the teams view
+- **And** I am viewing the team view
 - **And** the team edit dialog is displayed
 - **When** I update values in the fields with valid values
 - **And** I click **Save Team**
 - **Then** the team data is updated
+- **And** the heading area shows the updated team info
 - **And** the dialog is closed
 
 #### Scenario: User edits a team with invalid values and saves
 
 - **Given** I am signed in as a user with role `admin`
-- **And** I am viewing the teams view
+- **And** I am viewing the team view
 - **And** the team edit dialog is displayed
 - **When** I update values in the fields with invalid values
 - **And** I click **Save Team**
@@ -490,7 +522,7 @@ Unique index on (`teamId`, `number`).
 #### Scenario: User edits a team and cancels
 
 - **Given** I am signed in as a user with role `admin`
-- **And** I am viewing the teams view
+- **And** I am viewing the team view
 - **And** the team edit dialog is displayed
 - **When** I update values in the fields
 - **And** I click **Cancel**
@@ -552,13 +584,13 @@ Unique index on (`teamId`, `number`).
 #### Scenario: Student can list teams via the API
 
 - **Given** I am signed in as a user with role `student`
-- **When** I request `GET /courses/teams`
+- **When** I request `GET /league/teams`
 - **Then** the API returns `200` with an array of team objects
 
 #### Scenario: Student cannot create a team via the API
 
 - **Given** I am signed in as a user with role `student`
-- **When** I send `POST /courses/teams` with a valid team body
+- **When** I send `POST /league/teams` with a valid team body
 - **Then** the API returns `403` with `{ "message": "Admin role required." }`
 - **And** no new team is stored
 
@@ -566,20 +598,26 @@ Unique index on (`teamId`, `number`).
 
 - **Given** I am signed in as a user with role `student`
 - **And** a team exists
-- **When** I send `POST /courses/teams/:teamId/players` with a valid player body
+- **When** I send `POST /league/teams/:teamId/players` with a valid player body
 - **Then** the API returns `403` with `{ "message": "Admin role required." }`
 - **And** no new player is stored
 
 #### Scenario: Unauthenticated API request to teams
 
 - **Given** I have no valid session token
-- **When** I request `GET /courses/teams`
+- **When** I request `GET /league/teams`
 - **Then** the API returns `401` with an unauthorized message
 
 #### Scenario: Unauthenticated user navigates to teams
 
 - **Given** I have no session in `localStorage`
 - **When** I navigate to `/teams`
+- **Then** I am redirected to the login page
+
+#### Scenario: Unauthenticated user navigates to a team
+
+- **Given** I have no session in `localStorage`
+- **When** I navigate to `/teams/1`
 - **Then** I am redirected to the login page
 
 ---
@@ -591,17 +629,25 @@ Unique index on (`teamId`, `number`).
 - **Given** I am signed in as a user with role `admin`
 - **And** a team `OKC Strikers` exists
 - **And** a person `Jane Doe` exists
-- **And** the team edit dialog is displayed
-- **When** I click **+ Add player**
-- **And** I select person `Doe, Jane`, enter position `Forward`, and number `10`
+- **And** I am viewing the team view for `OKC Strikers`
+- **When** I click **Add Players**
+- **And** I select person `Doe, Jane`, enter number `10`, and position `Forward`
 - **And** I click **Add**
 - **Then** the API returns `201` with a player object containing `personId` for `Jane Doe`, `position` `Forward`, and `number` `10`
-- **And** `Doe` appears in the team's players list
+- **And** `Doe` appears in the team's players list with number `10` and position `Forward`
 - **And** the add-player dialog closes
+
+#### Scenario: User selects to add a player
+
+- **Given** I am signed in as a user with role `admin`
+- **And** I am viewing the team view
+- **When** I click **Add Players**
+- **Then** the add-player dialog is displayed
 
 #### Scenario: User adds a player with a missing required field
 
 - **Given** I am signed in as a user with role `admin`
+- **And** I am viewing the team view
 - **And** the add-player dialog is displayed
 - **When** I leave a required field empty
 - **And** I click **Add**
@@ -612,6 +658,7 @@ Unique index on (`teamId`, `number`).
 
 - **Given** I am signed in as a user with role `admin`
 - **And** `Jane Doe` is already a player on team `OKC Strikers`
+- **And** I am viewing the team view for `OKC Strikers`
 - **And** the add-player dialog is displayed
 - **When** I select person `Doe, Jane` with otherwise valid data
 - **And** I click **Add**
@@ -622,6 +669,7 @@ Unique index on (`teamId`, `number`).
 
 - **Given** I am signed in as a user with role `admin`
 - **And** team `OKC Strikers` already has a player with number `10`
+- **And** I am viewing the team view for `OKC Strikers`
 - **And** the add-player dialog is displayed
 - **When** I enter number `10` with otherwise valid data
 - **And** I click **Add**
@@ -631,23 +679,34 @@ Unique index on (`teamId`, `number`).
 #### Scenario: User adds a player with an unknown person
 
 - **Given** I am signed in as a user with role `admin`
-- **When** I send `POST /courses/teams/:teamId/players` with a `personId` that does not exist and otherwise valid data
+- **When** I send `POST /league/teams/:teamId/players` with a `personId` that does not exist and otherwise valid data
 - **Then** the API returns `400` with `{ "message": "Person not found." }`
 - **And** no player is stored
+
+#### Scenario: User selects to edit a player
+
+- **Given** I am signed in as a user with role `admin`
+- **And** I am viewing the team view
+- **And** a player is in the players list
+- **When** I click the edit icon on that player row
+- **Then** the player edit dialog is displayed
 
 #### Scenario: User edits a player with valid values and saves
 
 - **Given** I am signed in as a user with role `admin`
+- **And** I am viewing the team view
 - **And** the player edit dialog is displayed
-- **When** I update position and number with valid values
+- **When** I update number and position with valid values
 - **And** I click **Save Player**
 - **Then** the player data is updated
+- **And** the players list shows the updated number and position
 - **And** the dialog is closed
 
 #### Scenario: User removes a player from a team
 
 - **Given** I am signed in as a user with role `admin`
 - **And** `Jane Doe` is a player on team `OKC Strikers`
+- **And** I am viewing the team view for `OKC Strikers`
 - **And** the remove-player dialog is displayed
 - **When** I click **Remove Player**
 - **Then** the player row is deleted
@@ -658,9 +717,39 @@ Unique index on (`teamId`, `number`).
 
 - **Given** I am signed in as a user with role `admin`
 - **And** team `OKC Strikers` has no players
-- **And** the team edit dialog is displayed
+- **And** I am viewing the team view for `OKC Strikers`
 - **When** I view the players list
 - **Then** I see **"No players yet. Add the first player."**
+
+---
+
+### US-5.10 — View a team
+
+#### Scenario: User opens a team from the teams list
+
+- **Given** I am signed in as a user with role `admin`
+- **And** I am viewing the teams view
+- **And** a team `OKC Strikers` exists in league `OKC Youth Soccer`
+- **When** I click the **Open team** icon on the `OKC Strikers` row
+- **Then** the team view is displayed
+
+#### Scenario: Team view shows team info and actions
+
+- **Given** I am signed in as a user with role `admin`
+- **And** I am viewing the team view for `OKC Strikers` in league `OKC Youth Soccer`
+- **Then** the heading area shows team name `OKC Strikers`
+- **And** the heading area shows league `OKC Youth Soccer`
+- **And** **Edit team** is shown
+- **And** **Add Players** is shown
+
+#### Scenario: Team view lists players with name, number, and position
+
+- **Given** I am signed in as a user with role `admin`
+- **And** `Jane Doe` is a player on team `OKC Strikers` with number `10` and position `Forward`
+- **And** I am viewing the team view for `OKC Strikers`
+- **When** I view the players list
+- **Then** the list shows name `Doe, Jane`, number `10`, and position `Forward`
+- **And** the player row shows an **Edit player** icon action
 
 ---
 
@@ -670,7 +759,7 @@ Unique index on (`teamId`, `number`).
 
 - **Given** I am signed in as a user with role `admin`
 - **And** a team exists in league `OKC Youth Soccer`
-- **When** I send `DELETE /courses/leagues/:leagueId` for that league
+- **When** I send `DELETE /league/leagues/:leagueId` for that league
 - **Then** the API returns `400` with `{ "message": "Cannot delete league: teams still exist." }`
 - **And** the league is still stored
 - **And** the team is still stored
@@ -679,7 +768,7 @@ Unique index on (`teamId`, `number`).
 
 - **Given** I am signed in as a user with role `admin`
 - **And** `Jane Doe` is a player on a team
-- **When** I send `DELETE /courses/people/:personId` for that person
+- **When** I send `DELETE /league/people/:personId` for that person
 - **Then** the API returns `400` with `{ "message": "Cannot delete person: team roster still exists." }`
 - **And** the person is still stored
 - **And** the player row is still stored
@@ -698,7 +787,7 @@ Unique index on (`teamId`, `number`).
 | US-5.2 | User creates a team with a duplicate name in the same league  | `backend/tests/teams.test.js`, `frontend/tests/Teams.test.js`      | `User creates a team with a duplicate name in the same league`  |
 | US-5.3 | Teams view loads with existing teams                          | `backend/tests/teams.test.js`, `frontend/tests/Teams.test.js`      | `Teams view loads with existing teams`                          |
 | US-5.3 | User has no teams                                             | `frontend/tests/Teams.test.js`                                     | `User has no teams`                                             |
-| US-5.4 | team rows show edit and delete actions                        | `frontend/tests/Teams.test.js`                                     | `team rows show edit and delete actions`                        |
+| US-5.4 | team rows open the team view and show a delete action         | `frontend/tests/Teams.test.js`                                     | `team rows open the team view and show a delete action`         |
 | US-5.5 | User selects to edit a team                                   | `frontend/tests/Teams.test.js`                                     | `User selects to edit a team`                                   |
 | US-5.5 | User edits a team with valid values and saves                 | `backend/tests/teams.test.js`, `frontend/tests/Teams.test.js`      | `User edits a team with valid values and saves`                 |
 | US-5.5 | User edits a team with invalid values and saves               | `frontend/tests/Teams.test.js`                                     | `User edits a team with invalid values and saves`               |
@@ -713,14 +802,20 @@ Unique index on (`teamId`, `number`).
 | US-5.7 | Student cannot add a player via the API                       | `backend/tests/teams.test.js`                                      | `Student cannot add a player via the API`                       |
 | US-5.7 | Unauthenticated API request to teams                          | `backend/tests/teams.test.js`                                      | `Unauthenticated API request to teams`                          |
 | US-5.7 | Unauthenticated user navigates to teams                       | `frontend/tests/router.test.js`                                    | `Unauthenticated user navigates to teams`                       |
+| US-5.7 | Unauthenticated user navigates to a team                      | `frontend/tests/router.test.js`                                    | `Unauthenticated user navigates to a team`                      |
 | US-5.8 | User adds a player to a team                                  | `backend/tests/teams.test.js`, `frontend/tests/Teams.test.js`      | `User adds a player to a team`                                  |
+| US-5.8 | User selects to add a player                                  | `frontend/tests/Teams.test.js`                                     | `User selects to add a player`                                  |
 | US-5.8 | User adds a player with a missing required field              | `frontend/tests/Teams.test.js`                                     | `User adds a player with a missing required field`              |
 | US-5.8 | User adds a player who is already on the team                 | `backend/tests/teams.test.js`, `frontend/tests/Teams.test.js`      | `User adds a player who is already on the team`                 |
 | US-5.8 | User adds a player with a number that is already taken on the team | `backend/tests/teams.test.js`, `frontend/tests/Teams.test.js` | `User adds a player with a number that is already taken on the team` |
 | US-5.8 | User adds a player with an unknown person                     | `backend/tests/teams.test.js`                                      | `User adds a player with an unknown person`                     |
+| US-5.8 | User selects to edit a player                                 | `frontend/tests/Teams.test.js`                                     | `User selects to edit a player`                                 |
 | US-5.8 | User edits a player with valid values and saves               | `backend/tests/teams.test.js`, `frontend/tests/Teams.test.js`      | `User edits a player with valid values and saves`               |
 | US-5.8 | User removes a player from a team                             | `backend/tests/teams.test.js`, `frontend/tests/Teams.test.js`      | `User removes a player from a team`                             |
 | US-5.8 | Team with no players shows empty roster                       | `frontend/tests/Teams.test.js`                                     | `Team with no players shows empty roster`                       |
+| US-5.10 | User opens a team from the teams list                        | `frontend/tests/Teams.test.js`                                     | `User opens a team from the teams list`                         |
+| US-5.10 | Team view shows team info and actions                         | `frontend/tests/Teams.test.js`                                     | `Team view shows team info and actions`                         |
+| US-5.10 | Team view lists players with name, number, and position       | `frontend/tests/Teams.test.js`                                     | `Team view lists players with name, number, and position`       |
 | US-5.9 | User cannot delete a league that has a team                   | `backend/tests/leagues.test.js`, `backend/tests/teams.test.js`     | `User cannot delete a league that has a team`                   |
 | US-5.9 | User cannot delete a person who is a player                   | `backend/tests/people.test.js`, `backend/tests/teams.test.js`      | `User cannot delete a person who is a player`                   |
 
@@ -773,5 +868,6 @@ Do not implement behavior not in this spec.
 - `MenuBar` is Feature 1 chrome; Features 2–4 added **Seasons**, **Leagues**, and **People**; this feature added **Teams** for `admin`.
 - A later feature MUST add its nav item to this `MenuBar`; it MUST NOT create a second `MenuBar`.
 - The `teams` table belongs to `leagues`. The `players` table attaches Feature 4 **people** to a team with position and number.
+- [Feature 6](feature-6-game-management.md) attaches games to teams. A team MAY have many games. Feature 6 MUST reject `DELETE /league/teams/:teamId` with `400` when games still reference that team.
 
 ---

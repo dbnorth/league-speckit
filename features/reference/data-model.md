@@ -1,6 +1,6 @@
 # Data Model Reference
 
-**Status:** Feature 5 teams (plus Features 2–4 seasons/leagues/people, auth, and leftover section/faculty tables).
+**Status:** Feature 6 games (plus Features 2–5 seasons/leagues/people/teams, auth, and leftover section/faculty tables).
 
 Update this file when a feature that defines schema merges to `dev`.
 
@@ -11,11 +11,14 @@ Update this file when a feature that defines schema merges to `dev`.
 | Field       | Type       | Rules                                            |
 | ----------- | ---------- | ------------------------------------------------ |
 | `id`        | INTEGER PK | Auto-increment                                   |
-| `name`      | STRING(30) | Required; unique; trimmed; at most 30 characters |
+| `name`      | STRING(30) | Required; trimmed; at most 30 characters         |
 | `startDate` | DATE       | Required                                         |
 | `endDate`   | DATE       | Required; must be after `startDate`              |
+| `leagueId`  | INTEGER FK | Required; references `leagues.id`                |
 | `createdAt` | DATE       | Sequelize timestamps                             |
 | `updatedAt` | DATE       | Sequelize timestamps                             |
+
+Unique index on (`leagueId`, `name`). `leagueId` uses `ON DELETE RESTRICT`.
 
 ### `leagues`
 
@@ -67,6 +70,24 @@ Unique index on (`leagueId`, `name`). `leagueId` uses `ON DELETE RESTRICT`.
 
 Unique indexes on (`teamId`, `personId`) and (`teamId`, `number`). `teamId` uses `ON DELETE CASCADE`. `personId` uses `ON DELETE RESTRICT`.
 
+### `games`
+
+| Field               | Type       | Rules                                                       |
+| ------------------- | ---------- | ----------------------------------------------------------- |
+| `id`                | INTEGER PK | Auto-increment                                              |
+| `seasonId`          | INTEGER FK | Required; references `seasons.id`                           |
+| `gameDate`          | DATE       | Required                                                    |
+| `startTime`         | TIME       | Required                                                    |
+| `location`          | STRING(50) | Required; trimmed; at most 50 characters                    |
+| `homeTeamId`        | INTEGER FK | Required; references `teams.id`                             |
+| `visitingTeamId`    | INTEGER FK | Required; references `teams.id`                             |
+| `homeTeamScore`     | INTEGER    | Optional; when present, integer 0–999                       |
+| `visitingTeamScore` | INTEGER    | Optional; when present, integer 0–999                       |
+| `createdAt`         | DATE       | Sequelize timestamps                                        |
+| `updatedAt`         | DATE       | Sequelize timestamps                                        |
+
+`seasonId`, `homeTeamId`, and `visitingTeamId` use `ON DELETE RESTRICT`. Home and visiting teams must be different and belong to the season's league.
+
 ## Associations
 
-None for `seasons`. `Person belongsTo User` (`userId`, optional, `onDelete: SET NULL`). `User hasOne Person`. `Team belongsTo League` (`RESTRICT`). `League hasMany Team`. `Player belongsTo Team` (`CASCADE`). `Player belongsTo Person` (`RESTRICT`). `Team hasMany Player`. `Person hasMany Player`. Leftover section/faculty tables may still exist until later features are rewritten.
+`Season belongsTo League` (`RESTRICT`). `League hasMany Season`. `Person belongsTo User` (`userId`, optional, `onDelete: SET NULL`). `User hasOne Person`. `Team belongsTo League` (`RESTRICT`). `League hasMany Team`. `Player belongsTo Team` (`CASCADE`). `Player belongsTo Person` (`RESTRICT`). `Team hasMany Player`. `Person hasMany Player`. `Game belongsTo Season` (`RESTRICT`). `Season hasMany Game`. `Game belongsTo Team` as `homeTeam` (`RESTRICT`). `Game belongsTo Team` as `visitingTeam` (`RESTRICT`). `Team hasMany Game` as `homeGames` and `visitingGames`. Leftover section/faculty tables may still exist until later features are rewritten.

@@ -96,5 +96,27 @@ describe("Feature 5 — Team Management", () => {
 
       expect(router.currentRoute.value.name).toBe("login");
     });
+
+    it("Unauthenticated user navigates to a team", async () => {
+      await router.push("/login");
+      await router.push("/teams/1");
+
+      expect(router.currentRoute.value.name).toBe("login");
+    });
+  });
+});
+
+describe("Feature 6 — Game Management", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  describe("US-6.7 — Restrict game management to admins", () => {
+    it("Unauthenticated user navigates to games", async () => {
+      await router.push("/login");
+      await router.push("/games");
+
+      expect(router.currentRoute.value.name).toBe("login");
+    });
   });
 });

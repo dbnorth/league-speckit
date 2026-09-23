@@ -22,7 +22,7 @@ These guidelines **complement** the [constitution](./constitution.mdc) and stack
 
 **Minimum code that solves the authorized problem. Nothing speculative.**
 
-- Implement only what the active feature’s **FR-00N**, Screen/courses-api-dbn/Data sections, and Gherkin require — no extras.
+- Implement only what the active feature’s **FR-00N**, Screen/API/Data sections, and Gherkin require — no extras.
 - No abstractions for single-use code; no unrequested “flexibility” or config.
 - No error handling for impossible scenarios.
 - If you wrote far more than needed, rewrite smaller.
