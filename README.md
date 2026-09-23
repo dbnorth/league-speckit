@@ -1,12 +1,10 @@
-# League Speckit
+# League Management System
 
-Spec-Driven Development (SDD) starter kit — **empty product shell**.
+Student demo of **spec-driven** Vue 3 + Express + MySQL catalog CRUD: leagues, teams, people, seasons, and games.
 
 Specifications define _what_ to build (`features/`). Cursor rules define _how_ (`.cursor/rules/`). Tests verify both.
 
-This repository was generated from the Speckit starter kit. Replace this README’s product name, database, and API prefix, then add `features/feature-1-….md` before writing application code.
-
-**Docs:** [features/framework.md](features/framework.md) · [docs/STARTER-KIT.md](docs/STARTER-KIT.md) · [docs/adr/README.md](docs/adr/README.md)
+**Docs:** [Student catalog-copy guide](docs/STUDENT-GUIDE.md) · [features/README.md](features/README.md) · [features/framework.md](features/framework.md)
 
 ---
 
@@ -18,47 +16,51 @@ This repository was generated from the Speckit starter kit. Replace this README�
 | Backend  | Node.js (ES modules), Express, Sequelize, MySQL                   |
 | Tests    | Jest + supertest (backend), Vitest + `@vue/test-utils` (frontend) |
 
-Default ports: frontend `8082`, backend `3200`. API mount: `/league` (change in `backend/server.js` and `frontend/src/services/services.js`).
+Default ports: frontend `8082`, backend `3200`. API mount: `/league`.
 
 ---
 
-## Getting started
+## First run
 
 ```bash
 npm install --prefix frontend
 npm install --prefix backend
-npm install
 
 # macOS / Linux / Git Bash:
 cp backend/.env.example backend/.env
 cp backend/.env.test.example backend/.env.test
-# Windows PowerShell / cmd:
-#   copy backend\.env.example backend\.env
-#   copy backend\.env.test.example backend\.env.test
+# Windows: copy backend\.env.example backend\.env
 # Create MySQL databases; set DB_* and AUTH_SECRET
+```
 
+If MySQL still has leftover `courses`, `faculties`, or `sections` tables from older sample code, drop those tables before starting the backend.
+
+```bash
 npm test
 cd backend && npm run dev
 cd frontend && npm run dev
 ```
 
+Optional demo data (admin user, one league, three teams, one season):
+
+```bash
+npm run seed --prefix backend
+```
+
+Sign in as `admin` / `password123`.
+
 Works on **macOS, Windows, and Linux** — use `npm run …` for all tooling (PDF, Agility, bundles).
 
 ## Branching
 
-| Branch        | Purpose                                      |
-| ------------- | -------------------------------------------- |
-| `main`        | Starter kit only — no feature implementation |
-| `dev`         | Integration                                  |
-| `feature/N-*` | One feature at a time                        |
+| Branch        | Purpose                           |
+| ------------- | --------------------------------- |
+| `main`        | Release / starter snapshot        |
+| `dev`         | Integration                       |
+| `feature/N-*` | One feature at a time             |
 
-```bash
-git checkout -b dev
-git checkout -b feature/1-short-name
-```
+Product code belongs on `feature/N-short-name`, branched from `dev`.
 
-## Next steps
+## Copy a catalog
 
-1. Write `features/feature-1-….md` (see [framework template](../../features/framework.md#feature-spec-template) — **Status**, **Input**, **FR-00N**, **SC-00N**, **Key Entities**, **Agent implementation request**, **Definition of Done**).
-2. Update `features/README.md` catalog.
-3. Implement with Cursor: `Implement @features/feature-1-….md per its Agent implementation request and Definition of Done`, or one layer at a time (reference updates in the same PR when API/schema changes).
+See [docs/STUDENT-GUIDE.md](docs/STUDENT-GUIDE.md). Start from League (list + dialog), not from the Feature 8 scheduler.

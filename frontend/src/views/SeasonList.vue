@@ -46,8 +46,8 @@ const retrieveSeasons = async () => {
 
   try {
     const [seasonsResponse, leaguesResponse] = await Promise.all([
-      seasonServices.getseasons(),
-      leagueServices.getleagues(),
+      seasonServices.getSeasons(),
+      leagueServices.getLeagues(),
     ]);
     seasons.value = seasonsResponse.data;
     leagues.value = leaguesResponse.data;
@@ -111,9 +111,9 @@ const saveSeason = async () => {
 
   try {
     if (isAddMode.value) {
-      await seasonServices.createseason(payload);
+      await seasonServices.createSeason(payload);
     } else {
-      await seasonServices.updateseason(editingId.value, {
+      await seasonServices.updateSeason(editingId.value, {
         ...payload,
         seasonId: editingId.value,
       });
@@ -155,7 +155,7 @@ const confirmDeleteSeason = async () => {
   listError.value = "";
 
   try {
-    await seasonServices.deleteseason(seasonToDelete.value.id);
+    await seasonServices.deleteSeason(seasonToDelete.value.id);
     closeDeleteDialog();
     await retrieveSeasons();
   } catch (error) {

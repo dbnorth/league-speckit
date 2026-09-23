@@ -1,5 +1,6 @@
 import db from "../models/index.js";
 import logger from "../config/logger.js";
+import { parseId, requiredText } from "../helpers/fields.js";
 
 const SPORTS = ["soccer", "baseball", "volleyball", "football"];
 const exports = {};
@@ -19,13 +20,14 @@ exports.findAll = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { name, sport } = req.body;
+    const name = requiredText(req.body.name);
+    const sport = requiredText(req.body.sport);
 
-    if (!name?.trim() || !sport) {
+    if (!name || !sport) {
       return res.status(400).send({ message: "Required" });
     }
 
-    if (name.trim().length > 50) {
+    if (name.length > 50) {
       return res.status(400).send({
         message: "League name must be 50 characters or fewer.",
       });
@@ -38,14 +40,14 @@ exports.create = async (req, res) => {
     }
 
     const existing = await db.league.findOne({
-      where: { name: name.trim() },
+      where: { name },
     });
     if (existing) {
       return res.status(400).send({ message: "League name is already taken." });
     }
 
     const league = await db.league.create({
-      name: name.trim(),
+      name,
       sport,
     });
 
@@ -58,10 +60,11 @@ exports.create = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    const leagueId = parseInt(req.params.leagueId ?? req.body.leagueId, 10);
-    const { name, sport } = req.body;
+    const leagueId = parseId(req.params.leagueId ?? req.body.leagueId);
+    const name = requiredText(req.body.name);
+    const sport = requiredText(req.body.sport);
 
-    if (Number.isNaN(leagueId)) {
+    if (leagueId === null) {
       return res.status(400).send({ message: "Invalid league id." });
     }
 
@@ -72,11 +75,11 @@ exports.update = async (req, res) => {
       });
     }
 
-    if (!name?.trim() || !sport) {
+    if (!name || !sport) {
       return res.status(400).send({ message: "Required" });
     }
 
-    if (name.trim().length > 50) {
+    if (name.length > 50) {
       return res.status(400).send({
         message: "League name must be 50 characters or fewer.",
       });
@@ -89,7 +92,7 @@ exports.update = async (req, res) => {
     }
 
     const duplicate = await db.league.findOne({
-      where: { name: name.trim() },
+      where: { name },
     });
     if (duplicate && duplicate.id !== leagueId) {
       return res.status(400).send({ message: "League name is already taken." });
@@ -97,7 +100,7 @@ exports.update = async (req, res) => {
 
     await db.league.update(
       {
-        name: name.trim(),
+        name,
         sport,
       },
       { where: { id: leagueId } }
@@ -112,8 +115,8 @@ exports.update = async (req, res) => {
 
 exports.remove = async (req, res) => {
   try {
-    const leagueId = parseInt(req.params.leagueId, 10);
-    if (Number.isNaN(leagueId)) {
+    const leagueId = parseId(req.params.leagueId);
+    if (leagueId === null) {
       return res.status(400).send({ message: "Invalid league id." });
     }
 

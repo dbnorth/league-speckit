@@ -32,8 +32,8 @@ const retrieveTeams = async () => {
 
   try {
     const [teamsResponse, leaguesResponse] = await Promise.all([
-      teamServices.getteams(),
-      leagueServices.getleagues(),
+      teamServices.getTeams(),
+      leagueServices.getLeagues(),
     ]);
     teams.value = teamsResponse.data;
     leagues.value = leaguesResponse.data;
@@ -67,7 +67,7 @@ const saveTeam = async () => {
   saving.value = true;
 
   try {
-    await teamServices.createteam({
+    await teamServices.createTeam({
       name: form.value.name.trim(),
       leagueId: form.value.leagueId,
       homeField: form.value.homeField.trim(),
@@ -105,7 +105,7 @@ const confirmDeleteTeam = async () => {
   listError.value = "";
 
   try {
-    await teamServices.deleteteam(teamToDelete.value.id);
+    await teamServices.deleteTeam(teamToDelete.value.id);
     closeDeleteDialog();
     await retrieveTeams();
   } catch (error) {

@@ -11,10 +11,10 @@ import { mountWithPlugins } from "./testUtils.js";
 
 vi.mock("../src/services/leagueServices.js", () => ({
   default: {
-    getleagues: vi.fn(),
-    createleague: vi.fn(),
-    updateleague: vi.fn(),
-    deleteleague: vi.fn(),
+    getLeagues: vi.fn(),
+    createLeague: vi.fn(),
+    updateLeague: vi.fn(),
+    deleteLeague: vi.fn(),
   },
 }));
 
@@ -64,12 +64,12 @@ describe("Feature 3 — League Management", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    leagueServices.getleagues.mockResolvedValue({ data: [] });
-    leagueServices.createleague.mockResolvedValue({ data: okcYouthSoccer });
-    leagueServices.updateleague.mockResolvedValue({
+    leagueServices.getLeagues.mockResolvedValue({ data: [] });
+    leagueServices.createLeague.mockResolvedValue({ data: okcYouthSoccer });
+    leagueServices.updateLeague.mockResolvedValue({
       data: { message: "league updated successfully." },
     });
-    leagueServices.deleteleague.mockResolvedValue({
+    leagueServices.deleteLeague.mockResolvedValue({
       data: { message: "league deleted successfully." },
     });
   });
@@ -90,7 +90,7 @@ describe("Feature 3 — League Management", () => {
 
   describe("US-3.2 — Create league", () => {
     it("User creates a new league", async () => {
-      leagueServices.getleagues
+      leagueServices.getLeagues
         .mockResolvedValueOnce({ data: [] })
         .mockResolvedValue({ data: [okcYouthSoccer] });
 
@@ -101,7 +101,7 @@ describe("Feature 3 — League Management", () => {
       await fillLeagueForm(wrapper);
       await clickButton(wrapper, "Create");
 
-      expect(leagueServices.createleague).toHaveBeenCalledWith({
+      expect(leagueServices.createLeague).toHaveBeenCalledWith({
         name: "OKC Youth Soccer",
         sport: "soccer",
       });
@@ -117,7 +117,7 @@ describe("Feature 3 — League Management", () => {
       await fillLeagueForm(wrapper, { sport: "" });
       await clickButton(wrapper, "Create");
 
-      expect(leagueServices.createleague).not.toHaveBeenCalled();
+      expect(leagueServices.createLeague).not.toHaveBeenCalled();
       expect(wrapper.text()).toContain("Required");
     });
 
@@ -131,7 +131,7 @@ describe("Feature 3 — League Management", () => {
       });
       await clickButton(wrapper, "Create");
 
-      expect(leagueServices.createleague).not.toHaveBeenCalled();
+      expect(leagueServices.createLeague).not.toHaveBeenCalled();
       expect(wrapper.text()).toContain(
         "League name must be 50 characters or fewer."
       );
@@ -145,14 +145,14 @@ describe("Feature 3 — League Management", () => {
       await fillLeagueForm(wrapper, { sport: "basketball" });
       await clickButton(wrapper, "Create");
 
-      expect(leagueServices.createleague).not.toHaveBeenCalled();
+      expect(leagueServices.createLeague).not.toHaveBeenCalled();
       expect(wrapper.text()).toContain(
         "Sport must be soccer, baseball, volleyball, or football."
       );
     });
 
     it("User creates a league with a duplicate name", async () => {
-      leagueServices.createleague.mockRejectedValue({
+      leagueServices.createLeague.mockRejectedValue({
         response: { data: { message: "League name is already taken." } },
       });
 
@@ -163,7 +163,7 @@ describe("Feature 3 — League Management", () => {
       await fillLeagueForm(wrapper);
       await clickButton(wrapper, "Create");
 
-      expect(leagueServices.createleague).toHaveBeenCalled();
+      expect(leagueServices.createLeague).toHaveBeenCalled();
       expect(wrapper.text()).toContain("League name is already taken.");
       expect(wrapper.find(".v-dialog-stub").exists()).toBe(true);
     });
@@ -171,7 +171,7 @@ describe("Feature 3 — League Management", () => {
 
   describe("US-3.3 — View leagues", () => {
     it("Leagues view loads with existing leagues", async () => {
-      leagueServices.getleagues.mockResolvedValue({
+      leagueServices.getLeagues.mockResolvedValue({
         data: [
           { id: 2, name: "Metro Baseball", sport: "baseball" },
           okcYouthSoccer,
@@ -195,7 +195,7 @@ describe("Feature 3 — League Management", () => {
 
   describe("US-3.4 — Manage league rows", () => {
     it("league rows show edit and delete actions", async () => {
-      leagueServices.getleagues.mockResolvedValue({ data: [okcYouthSoccer] });
+      leagueServices.getLeagues.mockResolvedValue({ data: [okcYouthSoccer] });
       const mounted = await mountLeagues();
       wrapper = mounted.wrapper;
 
@@ -206,7 +206,7 @@ describe("Feature 3 — League Management", () => {
 
   describe("US-3.5 — Edit a league", () => {
     it("User selects to edit a league", async () => {
-      leagueServices.getleagues.mockResolvedValue({ data: [okcYouthSoccer] });
+      leagueServices.getLeagues.mockResolvedValue({ data: [okcYouthSoccer] });
       const mounted = await mountLeagues();
       wrapper = mounted.wrapper;
 
@@ -217,7 +217,7 @@ describe("Feature 3 — League Management", () => {
     });
 
     it("User edits a league with valid values and saves", async () => {
-      leagueServices.getleagues
+      leagueServices.getLeagues
         .mockResolvedValueOnce({ data: [okcYouthSoccer] })
         .mockResolvedValue({
           data: [{ ...okcYouthSoccer, name: "Metro Baseball", sport: "baseball" }],
@@ -234,13 +234,13 @@ describe("Feature 3 — League Management", () => {
       });
       await clickButton(wrapper, "Save League");
 
-      expect(leagueServices.updateleague).toHaveBeenCalled();
+      expect(leagueServices.updateLeague).toHaveBeenCalled();
       expect(wrapper.find(".v-dialog-stub").exists()).toBe(false);
       expect(wrapper.text()).toContain("Metro Baseball");
     });
 
     it("User edits a league with invalid values and saves", async () => {
-      leagueServices.getleagues.mockResolvedValue({ data: [okcYouthSoccer] });
+      leagueServices.getLeagues.mockResolvedValue({ data: [okcYouthSoccer] });
       const mounted = await mountLeagues();
       wrapper = mounted.wrapper;
 
@@ -251,7 +251,7 @@ describe("Feature 3 — League Management", () => {
       });
       await clickButton(wrapper, "Save League");
 
-      expect(leagueServices.updateleague).not.toHaveBeenCalled();
+      expect(leagueServices.updateLeague).not.toHaveBeenCalled();
       expect(wrapper.text()).toContain("Edit League");
       expect(wrapper.text()).toContain(
         "League name must be 50 characters or fewer."
@@ -259,7 +259,7 @@ describe("Feature 3 — League Management", () => {
     });
 
     it("User edits a league and cancels", async () => {
-      leagueServices.getleagues.mockResolvedValue({ data: [okcYouthSoccer] });
+      leagueServices.getLeagues.mockResolvedValue({ data: [okcYouthSoccer] });
       const mounted = await mountLeagues();
       wrapper = mounted.wrapper;
 
@@ -271,7 +271,7 @@ describe("Feature 3 — League Management", () => {
       });
       await clickButton(wrapper, "Cancel");
 
-      expect(leagueServices.updateleague).not.toHaveBeenCalled();
+      expect(leagueServices.updateLeague).not.toHaveBeenCalled();
       expect(wrapper.find(".v-dialog-stub").exists()).toBe(false);
       expect(wrapper.text()).toContain("OKC Youth Soccer");
     });
@@ -279,7 +279,7 @@ describe("Feature 3 — League Management", () => {
 
   describe("US-3.6 — Delete a league", () => {
     it("User selects to delete a league", async () => {
-      leagueServices.getleagues.mockResolvedValue({ data: [okcYouthSoccer] });
+      leagueServices.getLeagues.mockResolvedValue({ data: [okcYouthSoccer] });
       const mounted = await mountLeagues();
       wrapper = mounted.wrapper;
 
@@ -290,7 +290,7 @@ describe("Feature 3 — League Management", () => {
     });
 
     it("User deletes a league", async () => {
-      leagueServices.getleagues
+      leagueServices.getLeagues
         .mockResolvedValueOnce({ data: [okcYouthSoccer] })
         .mockResolvedValue({ data: [] });
 
@@ -301,13 +301,13 @@ describe("Feature 3 — League Management", () => {
       await flushPromises();
       await clickButton(wrapper, "Delete League");
 
-      expect(leagueServices.deleteleague).toHaveBeenCalledWith(1);
+      expect(leagueServices.deleteLeague).toHaveBeenCalledWith(1);
       expect(wrapper.find(".v-dialog-stub").exists()).toBe(false);
       expect(wrapper.text()).not.toContain("OKC Youth Soccer");
     });
 
     it("User cancels deleting a league", async () => {
-      leagueServices.getleagues.mockResolvedValue({ data: [okcYouthSoccer] });
+      leagueServices.getLeagues.mockResolvedValue({ data: [okcYouthSoccer] });
       const mounted = await mountLeagues();
       wrapper = mounted.wrapper;
 
@@ -315,7 +315,7 @@ describe("Feature 3 — League Management", () => {
       await flushPromises();
       await clickButton(wrapper, "Cancel");
 
-      expect(leagueServices.deleteleague).not.toHaveBeenCalled();
+      expect(leagueServices.deleteLeague).not.toHaveBeenCalled();
       expect(wrapper.find(".v-dialog-stub").exists()).toBe(false);
       expect(wrapper.text()).toContain("OKC Youth Soccer");
     });

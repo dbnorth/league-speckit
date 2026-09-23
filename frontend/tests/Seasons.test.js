@@ -17,31 +17,31 @@ import { createTestRouter, mountWithPlugins } from "./testUtils.js";
 
 vi.mock("../src/services/seasonServices.js", () => ({
   default: {
-    getseasons: vi.fn(),
-    createseason: vi.fn(),
-    updateseason: vi.fn(),
-    deleteseason: vi.fn(),
-    creategames: vi.fn(),
+    getSeasons: vi.fn(),
+    createSeason: vi.fn(),
+    updateSeason: vi.fn(),
+    deleteSeason: vi.fn(),
+    createGames: vi.fn(),
   },
 }));
 
 vi.mock("../src/services/leagueServices.js", () => ({
   default: {
-    getleagues: vi.fn(),
+    getLeagues: vi.fn(),
   },
 }));
 
 vi.mock("../src/services/gameServices.js", () => ({
   default: {
-    getgames: vi.fn(),
-    creategame: vi.fn(),
-    updategame: vi.fn(),
+    getGames: vi.fn(),
+    createGame: vi.fn(),
+    updateGame: vi.fn(),
   },
 }));
 
 vi.mock("../src/services/teamServices.js", () => ({
   default: {
-    getteams: vi.fn(),
+    getTeams: vi.fn(),
   },
 }));
 
@@ -179,15 +179,15 @@ describe("Feature 2 — Season Management", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    seasonServices.getseasons.mockResolvedValue({ data: [] });
-    gameServices.getgames.mockResolvedValue({ data: [] });
-    gameServices.creategame.mockResolvedValue({ data: memorialGame });
-    teamServices.getteams.mockResolvedValue({ data: [okcStrikers, tulsaFc] });
-    seasonServices.createseason.mockResolvedValue({ data: fall2026 });
-    seasonServices.updateseason.mockResolvedValue({ data: fall2026 });
-    seasonServices.deleteseason.mockResolvedValue({ data: { message: "season deleted successfully." } });
-    seasonServices.creategames.mockResolvedValue({ data: [] });
-    leagueServices.getleagues.mockResolvedValue({ data: [soccerLeague] });
+    seasonServices.getSeasons.mockResolvedValue({ data: [] });
+    gameServices.getGames.mockResolvedValue({ data: [] });
+    gameServices.createGame.mockResolvedValue({ data: memorialGame });
+    teamServices.getTeams.mockResolvedValue({ data: [okcStrikers, tulsaFc] });
+    seasonServices.createSeason.mockResolvedValue({ data: fall2026 });
+    seasonServices.updateSeason.mockResolvedValue({ data: fall2026 });
+    seasonServices.deleteSeason.mockResolvedValue({ data: { message: "season deleted successfully." } });
+    seasonServices.createGames.mockResolvedValue({ data: [] });
+    leagueServices.getLeagues.mockResolvedValue({ data: [soccerLeague] });
   });
 
   afterEach(() => {
@@ -206,7 +206,7 @@ describe("Feature 2 — Season Management", () => {
 
   describe("US-2.2 — Create season", () => {
     it("User creates a new season", async () => {
-      seasonServices.getseasons
+      seasonServices.getSeasons
         .mockResolvedValueOnce({ data: [] })
         .mockResolvedValue({ data: [fall2026] });
 
@@ -217,7 +217,7 @@ describe("Feature 2 — Season Management", () => {
       await fillSeasonForm(wrapper);
       await clickButton(wrapper, "Create");
 
-      expect(seasonServices.createseason).toHaveBeenCalledWith({
+      expect(seasonServices.createSeason).toHaveBeenCalledWith({
         name: "2026 Fall",
         startDate: "2026-08-15",
         endDate: "2026-12-15",
@@ -242,7 +242,7 @@ describe("Feature 2 — Season Management", () => {
       });
       await clickButton(wrapper, "Create");
 
-      expect(seasonServices.createseason).not.toHaveBeenCalled();
+      expect(seasonServices.createSeason).not.toHaveBeenCalled();
       expect(wrapper.text()).toContain("Required");
     });
 
@@ -258,7 +258,7 @@ describe("Feature 2 — Season Management", () => {
       });
       await clickButton(wrapper, "Create");
 
-      expect(seasonServices.createseason).not.toHaveBeenCalled();
+      expect(seasonServices.createSeason).not.toHaveBeenCalled();
       expect(wrapper.text()).toContain(
         "Season name must be 30 characters or fewer."
       );
@@ -276,12 +276,12 @@ describe("Feature 2 — Season Management", () => {
       });
       await clickButton(wrapper, "Create");
 
-      expect(seasonServices.createseason).not.toHaveBeenCalled();
+      expect(seasonServices.createSeason).not.toHaveBeenCalled();
       expect(wrapper.text()).toContain("End date must be after start date.");
     });
 
     it("User creates a season with a duplicate name", async () => {
-      seasonServices.createseason.mockRejectedValue({
+      seasonServices.createSeason.mockRejectedValue({
         response: { data: { message: "Season name is already taken in this league." } },
       });
 
@@ -296,7 +296,7 @@ describe("Feature 2 — Season Management", () => {
       });
       await clickButton(wrapper, "Create");
 
-      expect(seasonServices.createseason).toHaveBeenCalled();
+      expect(seasonServices.createSeason).toHaveBeenCalled();
       expect(wrapper.text()).toContain("Season name is already taken in this league.");
       expect(wrapper.text()).toContain("+ New season");
       expect(wrapper.find(".v-dialog-stub").exists()).toBe(true);
@@ -305,7 +305,7 @@ describe("Feature 2 — Season Management", () => {
 
   describe("US-2.3 — View seasons", () => {
     it("Seasons view loads with existing seasons", async () => {
-      seasonServices.getseasons.mockResolvedValue({
+      seasonServices.getSeasons.mockResolvedValue({
         data: [
           fall2026,
           {
@@ -336,7 +336,7 @@ describe("Feature 2 — Season Management", () => {
 
   describe("US-2.4 — Manage season rows", () => {
     it("season rows show edit and delete actions", async () => {
-      seasonServices.getseasons.mockResolvedValue({ data: [fall2026] });
+      seasonServices.getSeasons.mockResolvedValue({ data: [fall2026] });
       const mounted = await mountSeasons();
       wrapper = mounted.wrapper;
 
@@ -347,7 +347,7 @@ describe("Feature 2 — Season Management", () => {
 
   describe("US-2.5 — Edit a season", () => {
     it("User selects to edit a season", async () => {
-      seasonServices.getseasons.mockResolvedValue({ data: [fall2026] });
+      seasonServices.getSeasons.mockResolvedValue({ data: [fall2026] });
       const mounted = await mountSeasons();
       wrapper = mounted.wrapper;
 
@@ -358,7 +358,7 @@ describe("Feature 2 — Season Management", () => {
     });
 
     it("User edits a season with valid values and saves", async () => {
-      seasonServices.getseasons
+      seasonServices.getSeasons
         .mockResolvedValueOnce({ data: [fall2026] })
         .mockResolvedValue({
           data: [{ ...fall2026, name: "2027 Spring" }],
@@ -376,13 +376,13 @@ describe("Feature 2 — Season Management", () => {
       });
       await clickButton(wrapper, "Save Season");
 
-      expect(seasonServices.updateseason).toHaveBeenCalled();
+      expect(seasonServices.updateSeason).toHaveBeenCalled();
       expect(wrapper.find(".v-dialog-stub").exists()).toBe(false);
       expect(wrapper.text()).toContain("2027 Spring");
     });
 
     it("User edits a season with invalid values and saves", async () => {
-      seasonServices.getseasons.mockResolvedValue({ data: [fall2026] });
+      seasonServices.getSeasons.mockResolvedValue({ data: [fall2026] });
       const mounted = await mountSeasons();
       wrapper = mounted.wrapper;
 
@@ -395,7 +395,7 @@ describe("Feature 2 — Season Management", () => {
       });
       await clickButton(wrapper, "Save Season");
 
-      expect(seasonServices.updateseason).not.toHaveBeenCalled();
+      expect(seasonServices.updateSeason).not.toHaveBeenCalled();
       expect(wrapper.text()).toContain("Edit Season");
       expect(wrapper.text()).toContain(
         "Season name must be 30 characters or fewer."
@@ -403,7 +403,7 @@ describe("Feature 2 — Season Management", () => {
     });
 
     it("User edits a season and cancels", async () => {
-      seasonServices.getseasons.mockResolvedValue({ data: [fall2026] });
+      seasonServices.getSeasons.mockResolvedValue({ data: [fall2026] });
       const mounted = await mountSeasons();
       wrapper = mounted.wrapper;
 
@@ -416,7 +416,7 @@ describe("Feature 2 — Season Management", () => {
       });
       await clickButton(wrapper, "Cancel");
 
-      expect(seasonServices.updateseason).not.toHaveBeenCalled();
+      expect(seasonServices.updateSeason).not.toHaveBeenCalled();
       expect(wrapper.find(".v-dialog-stub").exists()).toBe(false);
       expect(wrapper.text()).toContain("2026 Fall");
     });
@@ -424,7 +424,7 @@ describe("Feature 2 — Season Management", () => {
 
   describe("US-2.6 — Delete a season", () => {
     it("User selects to delete a season", async () => {
-      seasonServices.getseasons.mockResolvedValue({ data: [fall2026] });
+      seasonServices.getSeasons.mockResolvedValue({ data: [fall2026] });
       const mounted = await mountSeasons();
       wrapper = mounted.wrapper;
 
@@ -435,7 +435,7 @@ describe("Feature 2 — Season Management", () => {
     });
 
     it("User deletes a season", async () => {
-      seasonServices.getseasons
+      seasonServices.getSeasons
         .mockResolvedValueOnce({ data: [fall2026] })
         .mockResolvedValue({ data: [] });
 
@@ -446,13 +446,13 @@ describe("Feature 2 — Season Management", () => {
       await flushPromises();
       await clickButton(wrapper, "Delete Season");
 
-      expect(seasonServices.deleteseason).toHaveBeenCalledWith(1);
+      expect(seasonServices.deleteSeason).toHaveBeenCalledWith(1);
       expect(wrapper.find(".v-dialog-stub").exists()).toBe(false);
       expect(wrapper.text()).not.toContain("2026 Fall");
     });
 
     it("User cancels deleting a season", async () => {
-      seasonServices.getseasons.mockResolvedValue({ data: [fall2026] });
+      seasonServices.getSeasons.mockResolvedValue({ data: [fall2026] });
       const mounted = await mountSeasons();
       wrapper = mounted.wrapper;
 
@@ -460,7 +460,7 @@ describe("Feature 2 — Season Management", () => {
       await flushPromises();
       await clickButton(wrapper, "Cancel");
 
-      expect(seasonServices.deleteseason).not.toHaveBeenCalled();
+      expect(seasonServices.deleteSeason).not.toHaveBeenCalled();
       expect(wrapper.find(".v-dialog-stub").exists()).toBe(false);
       expect(wrapper.text()).toContain("2026 Fall");
     });
@@ -472,12 +472,12 @@ describe("Feature 7 — Season View", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    seasonServices.getseasons.mockResolvedValue({ data: [fall2026] });
-    leagueServices.getleagues.mockResolvedValue({ data: [soccerLeague] });
-    gameServices.getgames.mockResolvedValue({ data: [] });
-    gameServices.creategame.mockResolvedValue({ data: memorialGame });
-    teamServices.getteams.mockResolvedValue({ data: [okcStrikers, tulsaFc] });
-    seasonServices.creategames.mockResolvedValue({ data: [] });
+    seasonServices.getSeasons.mockResolvedValue({ data: [fall2026] });
+    leagueServices.getLeagues.mockResolvedValue({ data: [soccerLeague] });
+    gameServices.getGames.mockResolvedValue({ data: [] });
+    gameServices.createGame.mockResolvedValue({ data: memorialGame });
+    teamServices.getTeams.mockResolvedValue({ data: [okcStrikers, tulsaFc] });
+    seasonServices.createGames.mockResolvedValue({ data: [] });
   });
 
   afterEach(() => {
@@ -517,7 +517,7 @@ describe("Feature 7 — Season View", () => {
     });
 
     it("Season view lists games for that season", async () => {
-      gameServices.getgames.mockResolvedValue({ data: [memorialGame] });
+      gameServices.getGames.mockResolvedValue({ data: [memorialGame] });
       const mounted = await mountSeason();
       wrapper = mounted.wrapper;
 
@@ -525,7 +525,7 @@ describe("Feature 7 — Season View", () => {
     });
 
     it("Season view does not list games from another season", async () => {
-      gameServices.getgames.mockResolvedValue({
+      gameServices.getGames.mockResolvedValue({
         data: [memorialGame, northFieldGame],
       });
       const mounted = await mountSeason();
@@ -555,7 +555,7 @@ describe("Feature 7 — Season View", () => {
     });
 
     it("User creates a game from the season view", async () => {
-      gameServices.getgames
+      gameServices.getGames
         .mockResolvedValueOnce({ data: [] })
         .mockResolvedValue({ data: [memorialGame] });
 
@@ -566,7 +566,7 @@ describe("Feature 7 — Season View", () => {
       await fillGameForm(wrapper);
       await clickButton(wrapper, "Create");
 
-      expect(gameServices.creategame).toHaveBeenCalledWith({
+      expect(gameServices.createGame).toHaveBeenCalledWith({
         seasonId: 1,
         gameDate: "2026-09-12",
         startTime: "18:00",
@@ -588,14 +588,14 @@ describe("Feature 7 — Season View", () => {
       await fillGameForm(wrapper, { startTime: "" });
       await clickButton(wrapper, "Create");
 
-      expect(gameServices.creategame).not.toHaveBeenCalled();
+      expect(gameServices.createGame).not.toHaveBeenCalled();
       expect(wrapper.text()).toContain("Required");
     });
   });
 
   describe("US-7.5 — Edit a game from the season view", () => {
     it("Season view game rows show an edit action", async () => {
-      gameServices.getgames.mockResolvedValue({ data: [memorialGame] });
+      gameServices.getGames.mockResolvedValue({ data: [memorialGame] });
       const mounted = await mountSeason();
       wrapper = mounted.wrapper;
 
@@ -603,7 +603,7 @@ describe("Feature 7 — Season View", () => {
     });
 
     it("User selects to edit a game from the season view", async () => {
-      gameServices.getgames.mockResolvedValue({ data: [memorialGame] });
+      gameServices.getGames.mockResolvedValue({ data: [memorialGame] });
       const mounted = await mountSeason();
       wrapper = mounted.wrapper;
 
@@ -618,12 +618,12 @@ describe("Feature 7 — Season View", () => {
     });
 
     it("User edits a game from the season view", async () => {
-      gameServices.getgames
+      gameServices.getGames
         .mockResolvedValueOnce({ data: [memorialGame] })
         .mockResolvedValue({
           data: [{ ...memorialGame, location: "North Field" }],
         });
-      gameServices.updategame.mockResolvedValue({
+      gameServices.updateGame.mockResolvedValue({
         data: { ...memorialGame, location: "North Field" },
       });
 
@@ -635,7 +635,7 @@ describe("Feature 7 — Season View", () => {
       await fillGameForm(wrapper, { location: "North Field" });
       await clickButton(wrapper, "Save Game");
 
-      expect(gameServices.updategame).toHaveBeenCalledWith(1, {
+      expect(gameServices.updateGame).toHaveBeenCalledWith(1, {
         seasonId: 1,
         gameDate: "2026-09-12",
         startTime: "18:00",
@@ -664,13 +664,13 @@ describe("Feature 8 — Create Season Games", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    seasonServices.getseasons.mockResolvedValue({ data: [fall2026] });
-    leagueServices.getleagues.mockResolvedValue({ data: [soccerLeague] });
-    gameServices.getgames.mockResolvedValue({ data: [] });
-    gameServices.creategame.mockResolvedValue({ data: memorialGame });
-    teamServices.getteams.mockResolvedValue({ data: [okcStrikers, tulsaFc] });
-    seasonServices.createseason.mockResolvedValue({ data: fall2026 });
-    seasonServices.creategames.mockResolvedValue({ data: sixSeasonGames });
+    seasonServices.getSeasons.mockResolvedValue({ data: [fall2026] });
+    leagueServices.getLeagues.mockResolvedValue({ data: [soccerLeague] });
+    gameServices.getGames.mockResolvedValue({ data: [] });
+    gameServices.createGame.mockResolvedValue({ data: memorialGame });
+    teamServices.getTeams.mockResolvedValue({ data: [okcStrikers, tulsaFc] });
+    seasonServices.createSeason.mockResolvedValue({ data: fall2026 });
+    seasonServices.createGames.mockResolvedValue({ data: sixSeasonGames });
   });
 
   afterEach(() => {
@@ -679,7 +679,7 @@ describe("Feature 8 — Create Season Games", () => {
 
   describe("US-8.1 — Store schedule settings on a season", () => {
     it("User creates a season with schedule settings", async () => {
-      seasonServices.getseasons
+      seasonServices.getSeasons
         .mockResolvedValueOnce({ data: [] })
         .mockResolvedValue({ data: [fall2026] });
 
@@ -690,7 +690,7 @@ describe("Feature 8 — Create Season Games", () => {
       await fillSeasonForm(wrapper);
       await clickButton(wrapper, "Create");
 
-      expect(seasonServices.createseason).toHaveBeenCalledWith({
+      expect(seasonServices.createSeason).toHaveBeenCalledWith({
         name: "2026 Fall",
         startDate: "2026-08-15",
         endDate: "2026-12-15",
@@ -710,7 +710,7 @@ describe("Feature 8 — Create Season Games", () => {
       await fillSeasonForm(wrapper, { gameDays: [] });
       await clickButton(wrapper, "Create");
 
-      expect(seasonServices.createseason).not.toHaveBeenCalled();
+      expect(seasonServices.createSeason).not.toHaveBeenCalled();
       expect(wrapper.text()).toContain("Required");
     });
   });
@@ -724,7 +724,7 @@ describe("Feature 8 — Create Season Games", () => {
     });
 
     it("User creates games for a season", async () => {
-      gameServices.getgames
+      gameServices.getGames
         .mockResolvedValueOnce({ data: [] })
         .mockResolvedValue({ data: sixSeasonGames });
 
@@ -733,7 +733,7 @@ describe("Feature 8 — Create Season Games", () => {
 
       await clickButton(wrapper, "Create Games");
 
-      expect(seasonServices.creategames).toHaveBeenCalledWith(1);
+      expect(seasonServices.createGames).toHaveBeenCalledWith(1);
       expect(wrapper.text()).toContain("OKC Strikers");
       expect(wrapper.findAll("tbody tr")).toHaveLength(6);
     });

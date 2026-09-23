@@ -1,19 +1,19 @@
 import apiClient from "./services.js";
 
 const gameServices = {
-  getgames() {
+  getGames() {
     return apiClient.get("games");
   },
 
-  creategame(game) {
+  createGame(game) {
     return apiClient.post("games", game);
   },
 
-  updategame(gameId, game) {
+  updateGame(gameId, game) {
     return apiClient.put(`games/${gameId}`, game);
   },
 
-  deletegame(gameId) {
+  deleteGame(gameId) {
     return apiClient.delete(`games/${gameId}`);
   },
 };

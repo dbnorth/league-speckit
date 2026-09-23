@@ -75,9 +75,9 @@ const retrieveSeason = async () => {
 
   try {
     const [seasonsResponse, gamesResponse, teamsResponse] = await Promise.all([
-      seasonServices.getseasons(),
-      gameServices.getgames(),
-      teamServices.getteams(),
+      seasonServices.getSeasons(),
+      gameServices.getGames(),
+      teamServices.getTeams(),
     ]);
     seasons.value = seasonsResponse.data;
     games.value = gamesResponse.data;
@@ -105,7 +105,7 @@ const createSeasonGames = async () => {
   creatingGames.value = true;
 
   try {
-    await seasonServices.creategames(seasonId.value);
+    await seasonServices.createGames(seasonId.value);
     await retrieveSeason();
   } catch (error) {
     listError.value =
@@ -169,9 +169,9 @@ const saveGame = async () => {
 
   try {
     if (isAddMode.value) {
-      await gameServices.creategame(payload);
+      await gameServices.createGame(payload);
     } else {
-      await gameServices.updategame(editingId.value, {
+      await gameServices.updateGame(editingId.value, {
         ...payload,
         gameId: editingId.value,
       });

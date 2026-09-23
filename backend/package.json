@@ -9,6 +9,7 @@
     "dev": "node --watch server.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "seed": "node scripts/seed.mjs",
     "bundle": "node scripts/make-deploy.mjs"
   },
   "keywords": ["node.js", "express", "sequelize"],

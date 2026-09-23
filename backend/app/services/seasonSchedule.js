@@ -1,3 +1,8 @@
+/**
+ * Feature 8 schedule builder — the only algorithm in this demo.
+ * Catalog CRUD (league, team, person, season list) does not need a file
+ * like this. Copy those controllers and Vue lists instead.
+ */
 export const WEEKDAYS = [
   "sunday",
   "monday",

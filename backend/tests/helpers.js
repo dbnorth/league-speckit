@@ -1,7 +1,14 @@
 import request from "supertest";
 import db from "../app/models/index.js";
 
+const LEFTOVER_TABLES = ["sections", "faculties", "courses"];
+
 export const syncTestDatabase = async () => {
+  await db.sequelize.query("SET FOREIGN_KEY_CHECKS = 0");
+  for (const table of LEFTOVER_TABLES) {
+    await db.sequelize.query(`DROP TABLE IF EXISTS \`${table}\``);
+  }
+  await db.sequelize.query("SET FOREIGN_KEY_CHECKS = 1");
   await db.sequelize.sync({ force: true });
 };
 

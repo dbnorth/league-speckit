@@ -1,19 +1,19 @@
 import apiClient from "./services.js";
 
 const peopleServices = {
-  getpeople() {
+  getPeople() {
     return apiClient.get("people");
   },
 
-  createperson(person) {
+  createPerson(person) {
     return apiClient.post("people", person);
   },
 
-  updateperson(personId, person) {
+  updatePerson(personId, person) {
     return apiClient.put(`people/${personId}`, person);
   },
 
-  deleteperson(personId) {
+  deletePerson(personId) {
     return apiClient.delete(`people/${personId}`);
   },
 };

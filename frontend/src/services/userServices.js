@@ -1,7 +1,7 @@
 import apiClient from "./services.js";
 
 const userServices = {
-  getusers() {
+  getUsers() {
     return apiClient.get("users");
   },
 
