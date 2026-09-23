@@ -555,5 +555,6 @@ Do not implement behavior not in this spec.
 - [Feature 5](feature-5-team-management.md) adds **Teams** to this `MenuBar`. Teams belong to leagues, not to seasons.
 - Feature 3 `DELETE /league/leagues/:leagueId` MUST reject `400` when seasons still reference that league.
 - [Feature 6](feature-6-game-management.md) attaches games to a season. Feature 6 MUST reject `DELETE /league/seasons/:seasonId` with `400` when games still reference that season.
+- [Feature 7](feature-7-season-view.md) adds a season view (`/seasons/:seasonId`) with season info, that season's games, and **Add Games** defaulted to the season.
 
 ---

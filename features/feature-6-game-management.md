@@ -622,3 +622,4 @@ Do not implement behavior not in this spec.
 - `MenuBar` is Feature 1 chrome; Features 2–5 added **Seasons**, **Leagues**, **People**, and **Teams**; this feature added **Games** for `admin`.
 - A later feature MUST add its nav item to this `MenuBar`; it MUST NOT create a second `MenuBar`.
 - The `games` table belongs to one season and two teams. A team has many games.
+- [Feature 7](feature-7-season-view.md) lists a season's games on the season view and adds a game with that season already selected.
