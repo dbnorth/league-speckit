@@ -4,7 +4,7 @@
 **Branch pattern:** `feature/8-create-season-games`
 **Status:** Ready
 **Created:** 2026-09-22
-**Input:** Signed-in admin users store schedule settings on a season (game days, regular game time, minimum days between a team's games, start date, and end date). On the season view, **Create Games** builds the season's games so every team in the season's league plays every other team once at home and once as visitor. Generated games start without a location (Feature 6: location is set on edit). Games land only on the season's game days, a team does not play again sooner than the minimum gap, and a team does not play the same opponent in two games in a row. If those rules cannot be met inside the season dates, show an error and create no games.
+**Input:** Signed-in admin users store schedule settings on a season (game days, regular game time, minimum days between a team's games, start date, and end date). On the season view, **Create Games** builds the season's games so every team in the season's league plays every other team once at home and once as visitor. Each generated game's `location` is the home team's `homeField`. Games land only on the season's game days, a team does not play again sooner than the minimum gap, and a team does not play the same opponent in two games in a row. If those rules cannot be met inside the season dates, show an error and create no games.
 **Depends on:** [Feature 1 — User Authentication](feature-1-user-auth.md), [Feature 2 — Season Management](feature-2-season-management.md), [Feature 5 — Team Management](feature-5-team-management.md), [Feature 6 — Game Management](feature-6-game-management.md), [Feature 7 — Season View](feature-7-season-view.md)
 
 ---
@@ -83,7 +83,7 @@
 - **FR-002**: `POST` and `PUT` `/league/seasons` MUST accept and persist the new fields with Feature 2 name, dates, and league rules. Empty `gameDays`, missing `gameTime`, or a `minDaysBetweenGames` that is not an integer `0`–`99` MUST return `400`. Invalid weekday message: **"Game days must be one or more of sunday, monday, tuesday, wednesday, thursday, friday, saturday."** Gap out of range: **"Minimum days between games must be between 0 and 99."**
 - **FR-003**: The season view (`Season.vue`) MUST show **Create Games** (`oc-cta`) in the heading area (in addition to Feature 7 **Add Games**). Clicking it MUST call `POST /league/seasons/:seasonId/games` with no body. On success, the season games list MUST refresh. On error, show the API `message` in a `<v-alert type="error">`. Do not open a GameForm for this action.
 - **FR-004**: `POST /league/seasons/:seasonId/games` MUST require `authenticate` then admin (`authenticateAdmin`). Unknown `seasonId` → `404` `{ "message": "Season with id=<id> not found." }`. Success → `201` and an array of the created Feature 6 game objects (with nested season and teams), ordered by `gameDate` then `startTime`.
-- **FR-005**: Generated games MUST use only teams that belong to the season's league. For every pair of distinct teams `A` and `B` in that league there MUST be exactly one game with home `A` / visiting `B` and exactly one with home `B` / visiting `A`. Scores MUST be `null`. `seasonId` and `startTime` (`gameTime`) MUST match the season. `location` MUST be `null` (set later on Feature 6 **Edit Game**). Home and visiting MUST be different and in the season's league (Feature 6 FR-009).
+- **FR-005**: Generated games MUST use only teams that belong to the season's league. For every pair of distinct teams `A` and `B` in that league there MUST be exactly one game with home `A` / visiting `B` and exactly one with home `B` / visiting `A`. Scores MUST be `null`. `seasonId` and `startTime` (`gameTime`) MUST match the season. `location` MUST be the home team's `homeField`. Home and visiting MUST be different and in the season's league (Feature 6 FR-009).
 - **FR-006**: Each generated `gameDate` MUST be on or between the season `startDate` and `endDate`, and that calendar day's weekday MUST be in `gameDays`.
 - **FR-007**: For each team, order that team's games by `gameDate` then `startTime`. The number of calendar days between consecutive games for that team MUST be `>= minDaysBetweenGames`. A team MUST NOT play the same opponent in two consecutive games in that ordered list. Opponent means the other team in the game (home or visiting).
 - **FR-008**: If no assignment of dates satisfies FR-005 through FR-007, the API MUST return `400` with `{ "message": "Season is not long enough to schedule all games." }` and MUST NOT create any games (all-or-nothing).
@@ -98,7 +98,7 @@
 
 - Features 1–7 MUST be merged to `dev` before implementing this feature.
 - Teams on the schedule are all Feature 5 teams with `leagueId` equal to the season's `leagueId`. Seasons do not have their own roster.
-- Location is a Feature 6 game field set on **Edit Game**. **Create Games** stores `null` location on each generated game.
+- Game `location` on generate is the home team's Feature 5 `homeField`. Admins MAY still edit a game's location later.
 - Calendar-day difference: game on `2026-09-12` and next game on `2026-09-19` is `7` days. Same calendar day is `0` days.
 - More than one game MAY share a date when different teams are involved, as long as each team still meets FR-007.
 - All generated games share the same `startTime`. Two games on the same date are still ordered by `startTime` then by id if needed for "in a row"; if they share the same time, order by `id` after create, or treat same-date same-time games for one team as `0` days apart (forbidden when `minDaysBetweenGames >= 1`).
@@ -268,7 +268,7 @@ No change to `games`. Generated rows are normal Feature 6 games (`ON DELETE REST
 - **And** that season has no games
 - **When** I click **Create Games**
 - **Then** the API returns `201` with `6` game objects
-- **And** every created game has `startTime` for `18:00` and no location
+- **And** every created game has `startTime` for `18:00` and location equal to the home team's home field
 - **And** the season games list shows `6` games
 
 ---

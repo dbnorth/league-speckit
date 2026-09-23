@@ -15,6 +15,10 @@ export default (sequelize, Sequelize) => {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
+      homeField: {
+        type: Sequelize.STRING(50),
+        allowNull: true,
+      },
     },
     {
       indexes: [{ unique: true, fields: ["leagueId", "name"] }],

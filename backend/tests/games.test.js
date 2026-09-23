@@ -32,7 +32,7 @@ describe("Feature 6 — Game Management", () => {
       expect(response.body.season.name).toBe("2026 Fall");
       expect(response.body.homeTeam.name).toBe("OKC Strikers");
       expect(response.body.visitingTeam.name).toBe("Tulsa FC");
-      expect(response.body.location).toBeNull();
+      expect(response.body.location).toBe("Memorial Field");
     });
 
     it("User creates a game with the same home and visiting team", async () => {
@@ -129,15 +129,18 @@ describe("Feature 6 — Game Management", () => {
       const { token } = await registerAdmin(app);
       await createGame(app, token);
       const laterSeason = await createSeason(app, token, { name: "2026 Spring" });
-      const homeTeam = await db.team.findOne({ where: { name: "OKC Strikers" } });
       const visitingTeam = await db.team.findOne({ where: { name: "Tulsa FC" } });
+      const northTeam = await createTeam(app, token, {
+        name: "North United",
+        homeField: "North Field",
+        leagueId: laterSeason.body.leagueId,
+      });
       await createGame(app, token, {
         seasonId: laterSeason.body.id,
-        homeTeamId: homeTeam.id,
+        homeTeamId: northTeam.body.id,
         visitingTeamId: visitingTeam.id,
         gameDate: "2026-03-12",
         startTime: "10:00",
-        location: "North Field",
       });
 
       const response = await request(app)
@@ -148,7 +151,7 @@ describe("Feature 6 — Game Management", () => {
       expect(response.body).toHaveLength(2);
       expect(response.body.map((row) => row.location)).toEqual([
         "North Field",
-        null,
+        "Memorial Field",
       ]);
     });
   });

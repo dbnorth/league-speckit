@@ -342,7 +342,8 @@ exports.createGames = async (req, res) => {
             seasonId,
             gameDate: row.gameDate,
             startTime: season.gameTime,
-            location: null,
+            location: teams.find((team) => team.id === row.homeTeamId)?.homeField
+              ?.trim() || null,
             homeTeamId: row.homeTeamId,
             visitingTeamId: row.visitingTeamId,
             homeTeamScore: null,

@@ -105,6 +105,7 @@ export const createPerson = async (app, token, overrides = {}) => {
 
 export const validTeam = (overrides = {}) => ({
   name: "OKC Strikers",
+  homeField: "Memorial Field",
   ...overrides,
 });
 

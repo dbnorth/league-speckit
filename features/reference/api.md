@@ -47,7 +47,7 @@
 }
 ```
 
-**Create season games:** `POST /league/seasons/:seasonId/games` with no body. Success `201` is an array of Feature 6 game objects, count `n * (n - 1)` for `n` teams in the season's league. Generated games have `location` `null`.
+**Create season games:** `POST /league/seasons/:seasonId/games` with no body. Success `201` is an array of Feature 6 game objects, count `n * (n - 1)` for `n` teams in the season's league. Each game `location` is the home team's `homeField`.
 
 **League create / update body:**
 
@@ -75,7 +75,7 @@ Do not send `id` on create. League `userId` is ignored. Person `userId` is an op
 
 `userId` MAY be omitted or `null`. Sending `null` on update unlinks the user.
 
-**Team create / update body:** `{ "name": "OKC Strikers", "leagueId": 1 }`  
+**Team create / update body:** `{ "name": "OKC Strikers", "leagueId": 1, "homeField": "Memorial Field" }`  
 **Player create / update body:** `{ "personId": 1, "position": "Forward", "number": 10 }`  
 **Game create / update body:**
 

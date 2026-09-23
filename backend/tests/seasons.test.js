@@ -269,7 +269,7 @@ describe("Feature 8 — Create Season Games", () => {
         response.body.every(
           (game) =>
             String(game.startTime).includes("18:00") &&
-            game.location == null
+            game.location === "Memorial Field"
         )
       ).toBe(true);
     });

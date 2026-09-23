@@ -53,6 +53,7 @@ Unique index on (`leagueId`, `name`). `leagueId` uses `ON DELETE RESTRICT`.
 | ----------- | ---------- | ---------------------------------------------- |
 | `id`        | INTEGER PK | Auto-increment                                 |
 | `name`      | STRING(50) | Required; trimmed; at most 50 characters       |
+| `homeField` | STRING(50) | Required; trimmed; used as home-game location  |
 | `leagueId`  | INTEGER FK | Required; references `leagues.id`              |
 | `createdAt` | DATE       | Sequelize timestamps                           |
 | `updatedAt` | DATE       | Sequelize timestamps                           |

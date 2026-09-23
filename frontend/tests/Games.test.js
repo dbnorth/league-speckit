@@ -41,6 +41,7 @@ const fallSeason = {
 const okcStrikers = {
   id: 1,
   name: "OKC Strikers",
+  homeField: "Memorial Field",
   leagueId: 1,
 };
 

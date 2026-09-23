@@ -122,7 +122,7 @@
 - **FR-005**: Unauthenticated team API requests MUST return `401`. Unauthenticated navigation to `/teams` or `/teams/:teamId` MUST redirect to `login`.
 - **FR-006**: Teams MUST be ordered by related league `name`, then team `name`, in API responses. Players on a team MUST be ordered by `number`.
 - **FR-007**: This feature MUST deliver a **teams list** in `Teams.vue` and a **team view** in `Team.vue`. The team view MUST have a heading area for team info, an **Edit team** button that opens the **Edit Team** dialog, an **Add Players** button that opens the **Add Player** dialog, and a player list (name, number, position) with an **Edit player** icon that opens the **Edit Player** dialog. Team and player mutations stay dialog-based. No sidebar/main split. Player management MUST NOT live inside the **Edit Team** dialog.
-- **FR-008**: Team `name` MUST be required, trimmed, and at most 50 characters. Too-long message: **"Team name must be 50 characters or fewer."** The pair (`leagueId`, `name`) MUST be unique. Duplicate message: **"Team name is already taken in this league."**
+- **FR-008**: Team `name` MUST be required, trimmed, and at most 50 characters. Too-long message: **"Team name must be 50 characters or fewer."** The pair (`leagueId`, `name`) MUST be unique. Duplicate message: **"Team name is already taken in this league."** `homeField` MUST be required, trimmed, and at most 50 characters. Too-long message: **"Home field must be 50 characters or fewer."** `homeField` is the venue used as the game `location` when that team is home (Feature 6).
 - **FR-009**: `leagueId` MUST be a required integer that exists in `leagues`. Missing league message: **"League not found."** (HTTP `400`). A league MAY have many teams.
 - **FR-010**: A player MUST belong to one team and one Feature 4 person. `teamId` comes from the route. `personId` MUST be a required integer that exists in `people`. Missing person message: **"Person not found."** (HTTP `400`). The pair (`teamId`, `personId`) MUST be unique. Duplicate-person message: **"Person is already on this team."** A person MAY be on more than one team.
 - **FR-011**: Player `position` MUST be required, trimmed, and at most 30 characters. Too-long message: **"Position must be 30 characters or fewer."**
@@ -204,7 +204,7 @@ Teams and players are a **shared catalog**. They are not owned by the signed-in 
 | -------- | --------------------------------------------- | ---------- | -------------------------------------------- |
 | `GET`    | `/league/teams`                              | Yes        | Fetch all teams with league and players      |
 | `POST`   | `/league/teams`                              | Yes, admin | Create a team in a league                    |
-| `PUT`    | `/league/teams/:teamId`                      | Yes, admin | Update a team's name or league               |
+| `PUT`    | `/league/teams/:teamId`                      | Yes, admin | Update a team's name, league, or home field  |
 | `DELETE` | `/league/teams/:teamId`                      | Yes, admin | Delete a team and its player rows            |
 | `GET`    | `/league/teams/:teamId/players`              | Yes        | Fetch players on one team                    |
 | `POST`   | `/league/teams/:teamId/players`              | Yes, admin | Add a player to a team                       |
@@ -216,7 +216,8 @@ Teams and players are a **shared catalog**. They are not owned by the signed-in 
 ```json
 {
   "name": "OKC Strikers",
-  "leagueId": 1
+  "leagueId": 1,
+  "homeField": "Memorial Field"
 }
 ```
 
@@ -231,6 +232,7 @@ Do not send `id` on create. Players are **not** created in this body.
   "id": 1,
   "name": "OKC Strikers",
   "leagueId": 1,
+  "homeField": "Memorial Field",
   "league": {
     "id": 1,
     "name": "OKC Youth Soccer",
@@ -292,6 +294,7 @@ This feature also changes Feature 3–4 delete APIs (FR-013): `DELETE /league/le
 - **Add Team** fields:
   - **Team Name** (`v-text-field`)
   - **League** (`v-select` of existing leagues, display league `name`)
+  - **Home Field** (`v-text-field`)
 - **Add Team** actions: **Create** (`oc-cta`) / **Cancel** (secondary `variant="text"` or `outlined`).
 - List: `v-table` (or `v-list`); columns **team name**, **league**, and **players** (count); rows ordered by league name then team name (FR-006).
 - Team name is plain text (not a link).
@@ -308,13 +311,14 @@ This feature also changes Feature 3–4 delete APIs (FR-013): `DELETE /league/le
 
 This is the team view (team main).
 
-- **Heading area** shows team info: team **name** and **league** name (and sport if already on the nested `league` object).
+- **Heading area** shows team info: team **name**, **league** name (and sport if already on the nested `league` object), and **home field**.
 - Actions in the heading area:
-  - **Edit team** (`oc-cta`) opens the **Edit Team** `<v-dialog>` pre-filled with current name and league.
+  - **Edit team** (`oc-cta`) opens the **Edit Team** `<v-dialog>` pre-filled with current name, league, and home field.
   - **Add Players** (`oc-cta`) opens the **Add Player** `<v-dialog>`.
-- **Edit Team** fields (name and league only — no player list in this dialog):
+- **Edit Team** fields (name, league, and home field — no player list in this dialog):
   - **Team Name** (`v-text-field`)
   - **League** (`v-select` of existing leagues, display league `name`)
+  - **Home Field** (`v-text-field`)
 - **Edit Team** actions: **Save Team** (`oc-cta`) / **Cancel** (secondary). After a successful save, the heading area shows the updated team info and the dialog closes.
 - **Player list:** `v-table` (or `v-list`); columns **name** (person last name, first name), **number**, and **position**; rows ordered by `number` (FR-006).
 - Each player row has an icon-only **Edit player** action (`size="small"`, `aria-label` **Edit player**) that opens the **Edit Player** `<v-dialog>` pre-filled with that player's person, number, and position.
@@ -356,6 +360,7 @@ This is the team view (team main).
 | ----------- | ---------- | ---------------------------------------------- |
 | `id`        | INTEGER PK | Auto-increment                                 |
 | `name`      | STRING(50) | Required; trimmed; at most 50 characters       |
+| `homeField` | STRING(50) | Required; trimmed; at most 50 characters       |
 | `leagueId`  | INTEGER FK | Required; references `leagues.id`              |
 | `createdAt` | DATE       | Sequelize timestamps                           |
 | `updatedAt` | DATE       | Sequelize timestamps                           |
@@ -409,9 +414,9 @@ Unique index on (`teamId`, `number`).
 - **And** a league `OKC Youth Soccer` exists
 - **And** I am viewing the teams view
 - **When** I click **+ New team**
-- **And** I enter team name `OKC Strikers` and select league `OKC Youth Soccer`
+- **And** I enter team name `OKC Strikers`, home field `Memorial Field`, and select league `OKC Youth Soccer`
 - **And** I click **Create**
-- **Then** the API returns `201` with a team object containing `id`, `name` `OKC Strikers`, and nested `league.name` `OKC Youth Soccer`
+- **Then** the API returns `201` with a team object containing `id`, `name` `OKC Strikers`, `homeField` `Memorial Field`, and nested `league.name` `OKC Youth Soccer`
 - **And** `OKC Strikers` appears in the teams view list
 - **And** the add-team dialog closes
 

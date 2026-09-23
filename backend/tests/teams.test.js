@@ -34,6 +34,7 @@ describe("Feature 5 — Team Management", () => {
       expect(response.body).toMatchObject({
         name: "OKC Strikers",
         leagueId: league.body.id,
+        homeField: "Memorial Field",
       });
       expect(response.body.id).toEqual(expect.any(Number));
       expect(response.body.league.name).toBe("OKC Youth Soccer");
@@ -107,6 +108,7 @@ describe("Feature 5 — Team Management", () => {
           teamId: created.body.id,
           name: "OKC United",
           leagueId: league.body.id,
+          homeField: "Memorial Field",
         });
 
       expect(response.status).toBe(200);

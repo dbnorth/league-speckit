@@ -48,7 +48,8 @@
 | Any authenticated role may `GET` games | `authenticate` on `GET /league/games` | Feature 6 |
 | Only `admin` may create, update, or delete games | `authenticateAdmin` on `POST` / `PUT` / `DELETE` → `403` `{ "message": "Admin role required." }` | Feature 6 |
 | Game requires season, date, start time, home team, and visiting team | Client rules + API `400` | Feature 6 |
-| Game location is optional and set on Edit Game | Optional `location`; max 50 when present | Feature 6 |
+| Game location on create comes from the home team's home field | `homeField` copied to `location` | Feature 5 / 6 |
+| Game location can still be changed on Edit Game | Optional `location`; max 50 when present | Feature 6 |
 | Home and visiting teams must be different and in the season's league | API `400` | Feature 6 |
 | Scores are optional integers 0–999 | Client rules + API `400` `"Score must be between 0 and 999."` | Feature 6 |
 | Cannot delete a season that still has games | API `400` `"Cannot delete season: games still exist."` | Feature 6 |
