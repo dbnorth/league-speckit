@@ -28,11 +28,16 @@
 | Only `admin` may list users for the person link | `authenticateAdmin` on `GET /league/users` | Feature 4 |
 | Person names, email, birth date, and gender are validated | Client rules + API `400` | Feature 4 |
 | Email is unique on `people`; a user links to at most one person | API `400` `"Email is already taken."` / `"User is already linked to a person."` | Feature 4 |
+| Linked user email must match the person email | API `400` `"User email must match the person's email."` | Feature 9 |
+| New users default to role `manager` | `users.role` default; register payload | Feature 9 |
+| Register links an unlinked person with the same email | Sets `people.userId` when exactly one unlinked match | Feature 9 |
 | Deleting a person does not delete the linked Feature 1 user | `destroy` person row only | Feature 4 |
 | People are ordered by last name, then first name | `order: [["lastName", "ASC"], ["firstName", "ASC"]]` | Feature 4 |
 | **People** menu and `/people` are admin-only in the UI | `MenuBar` shows **People** when `user.role === "admin"` | Feature 4 |
 | Unauthenticated `/people` redirects to login | Router `beforeEach` | Feature 4 |
 | Teams belong to a league; players attach a person with position and number | `teams.leagueId`, `players.teamId` / `personId` | Feature 5 |
+| A team MAY have one manager person | Optional `teams.managerId`; nested `manager` | Feature 9 |
+| Cannot delete a person who is still a team manager | API `400` `"Cannot delete person: team manager still exists."` | Feature 9 |
 | Any authenticated role may `GET` teams and players | `authenticate` on team and player `GET` | Feature 5 |
 | Only `admin` may create, update, or delete teams and players | `authenticateAdmin` on `POST` / `PUT` / `DELETE` → `403` `{ "message": "Admin role required." }` | Feature 5 |
 | Team name is unique per league | API `400` `"Team name is already taken in this league."` | Feature 5 |
@@ -41,7 +46,9 @@
 | Cannot delete a person who is still a player | API `400` `"Cannot delete person: team roster still exists."` | Feature 5 |
 | Deleting a team removes player rows only | Destroy players then team; people remain | Feature 5 |
 | Teams are ordered by league name, then team name | Include `league` and order those columns | Feature 5 |
-| **Teams** menu and `/teams` are admin-only in the UI | `MenuBar` shows **Teams** when `user.role === "admin"` | Feature 5 |
+| **Teams** menu is admin and manager | `MenuBar` shows **Teams** when role is `admin` or `manager` | Feature 9 |
+| Manager `GET /league/teams` is only teams they manage | Filter `managerId` to the person linked to `req.user.id` | Feature 9 |
+| Manager may add, edit, and remove players on teams they manage | Player `POST` / `PUT` / `DELETE` allowed for that team's manager; other teams `403` | Feature 9 |
 | Team view shows team info, Edit team, Add Players, and a player list | `/teams/:teamId` heading + dialogs; players not in Edit Team | Feature 5 |
 | Unauthenticated `/teams` or `/teams/:teamId` redirects to login | Router `beforeEach` | Feature 5 |
 | Games are a shared catalog (no owner `userId`) | Ignore client `userId`; table has no ownership column | Feature 6 |

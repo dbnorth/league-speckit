@@ -1,9 +1,11 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import teamServices from "../services/teamServices.js";
 import leagueServices from "../services/leagueServices.js";
+import peopleServices from "../services/peopleServices.js";
 import TeamForm from "../components/TeamForm.vue";
+import Utils from "../config/utils.js";
 
 const router = useRouter();
 
@@ -11,10 +13,12 @@ const emptyForm = () => ({
   name: "",
   leagueId: null,
   homeField: "",
+  managerId: null,
 });
 
 const teams = ref([]);
 const leagues = ref([]);
+const people = ref([]);
 const loading = ref(false);
 const listError = ref("");
 const formDialogOpen = ref(false);
@@ -25,18 +29,21 @@ const saving = ref(false);
 const deleteDialogOpen = ref(false);
 const teamToDelete = ref(null);
 const deleting = ref(false);
+const isAdmin = computed(() => Utils.getStore("user")?.role === "admin");
 
 const retrieveTeams = async () => {
   loading.value = true;
   listError.value = "";
 
   try {
-    const [teamsResponse, leaguesResponse] = await Promise.all([
+    const [teamsResponse, leaguesResponse, peopleResponse] = await Promise.all([
       teamServices.getTeams(),
       leagueServices.getLeagues(),
+      peopleServices.getPeople(),
     ]);
     teams.value = teamsResponse.data;
     leagues.value = leaguesResponse.data;
+    people.value = peopleResponse.data;
   } catch (error) {
     listError.value =
       error.response?.data?.message || "Failed to fetch teams.";
@@ -71,6 +78,7 @@ const saveTeam = async () => {
       name: form.value.name.trim(),
       leagueId: form.value.leagueId,
       homeField: form.value.homeField.trim(),
+      managerId: form.value.managerId || null,
     });
     closeFormDialog();
     await retrieveTeams();
@@ -126,6 +134,7 @@ onMounted(retrieveTeams);
         <v-card-title>Teams</v-card-title>
         <template #append>
           <v-btn
+            v-if="isAdmin"
             color="primary"
             variant="elevated"
             class="oc-cta"
@@ -144,7 +153,11 @@ onMounted(retrieveTeams);
         </v-alert>
 
         <p v-if="!loading && teams.length === 0" class="text-body-1">
-          No teams yet. Create your first team.
+          {{
+            isAdmin
+              ? "No teams yet. Create your first team."
+              : "No teams assigned."
+          }}
         </p>
 
         <v-table v-if="!loading && teams.length > 0">
@@ -152,6 +165,7 @@ onMounted(retrieveTeams);
             <tr>
               <th class="text-left">Team name</th>
               <th class="text-left">League</th>
+              <th class="text-left">Manager</th>
               <th class="text-left">Players</th>
               <th class="text-left">Actions</th>
             </tr>
@@ -160,6 +174,11 @@ onMounted(retrieveTeams);
             <tr v-for="team in teams" :key="team.id">
               <td>{{ team.name }}</td>
               <td>{{ team.league?.name }}</td>
+              <td>
+                <template v-if="team.manager">
+                  {{ team.manager.lastName }}, {{ team.manager.firstName }}
+                </template>
+              </td>
               <td>{{ team.players?.length ?? 0 }}</td>
               <td>
                 <v-icon
@@ -171,6 +190,7 @@ onMounted(retrieveTeams);
                   mdi-account-group
                 </v-icon>
                 <v-icon
+                  v-if="isAdmin"
                   size="small"
                   class="mx-4"
                   aria-label="Delete team"
@@ -193,6 +213,7 @@ onMounted(retrieveTeams);
             ref="formRef"
             v-model="form"
             :leagues="leagues"
+            :people="people"
             @submit="saveTeam"
           />
           <v-alert v-if="formError" type="error" density="compact" class="mt-2">

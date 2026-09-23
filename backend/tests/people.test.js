@@ -49,7 +49,7 @@ describe("Feature 4 — People Management", () => {
       const { token } = await registerAdmin(app);
       const { response: linkedUser } = await registerUser(app, {
         username: "jdoe",
-        email: "jdoe@example.com",
+        email: "jane.doe@example.com",
       });
 
       const response = await createPerson(app, token, {
@@ -79,7 +79,7 @@ describe("Feature 4 — People Management", () => {
       const { token } = await registerAdmin(app);
       const { response: linkedUser } = await registerUser(app, {
         username: "jdoe",
-        email: "jdoe@example.com",
+        email: "jane.doe@example.com",
       });
       await createPerson(app, token, { userId: linkedUser.body.userId });
 
@@ -162,7 +162,7 @@ describe("Feature 4 — People Management", () => {
       const { token } = await registerAdmin(app);
       const { response: linkedUser } = await registerUser(app, {
         username: "jdoe",
-        email: "jdoe@example.com",
+        email: "jane.doe@example.com",
       });
       const created = await createPerson(app, token, {
         userId: linkedUser.body.userId,
@@ -255,6 +255,49 @@ describe("Feature 4 — People Management", () => {
       });
       expect(await db.person.findByPk(person.body.id)).not.toBeNull();
       expect(await db.player.findByPk(player.body.id)).not.toBeNull();
+    });
+  });
+
+  describe("US-9.4 — Connect a new user to a person with the same email", () => {
+    it("User cannot link a person to a user with a different email", async () => {
+      const { token } = await registerAdmin(app);
+      const { response: linkedUser } = await registerUser(app, {
+        username: "otheruser",
+        email: "other@example.com",
+      });
+
+      const response = await createPerson(app, token, {
+        userId: linkedUser.body.userId,
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: "User email must match the person's email.",
+      });
+      expect(await db.person.count()).toBe(0);
+    });
+  });
+
+  describe("US-9.5 — Block delete of a person who manages a team", () => {
+    it("User cannot delete a person who is a team manager", async () => {
+      const { token } = await registerAdmin(app);
+      const league = await createLeague(app, token);
+      const person = await createPerson(app, token);
+      const team = await createTeam(app, token, {
+        leagueId: league.body.id,
+        managerId: person.body.id,
+      });
+
+      const response = await request(app)
+        .delete(`/league/people/${person.body.id}`)
+        .set(authHeader(token));
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        message: "Cannot delete person: team manager still exists.",
+      });
+      expect(await db.person.findByPk(person.body.id)).not.toBeNull();
+      expect(await db.team.findByPk(team.body.id)).not.toBeNull();
     });
   });
 });

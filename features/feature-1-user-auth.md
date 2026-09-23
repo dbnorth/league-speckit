@@ -83,7 +83,7 @@
 - **FR-004**: Sessions MUST use a **JWT + Session table** pattern: token stored server-side; client sends `Authorization: Bearer <token>`.
 - **FR-005**: Session lifetime MUST be **24 hours** from creation.
 - **FR-006**: Login MUST reuse a non-expired session for the same user when one already exists.
-- **FR-007**: Default role for new users MUST be `worker`.
+- **FR-007**: Default role for new users MUST be `manager` ([Feature 9](feature-9-team-manager.md) supersedes the earlier `worker` / `student` default). Role `manager` is non-admin unless a later feature says otherwise.
 - **FR-008**: Every authenticated request MUST resolve to exactly one user via `req.user.id` from the session token (foundation for Features 2–3 ownership).
 - **FR-009**: Registration MUST use shared `emailRules` from `frontend/src/config/validation.js` — required plus regex (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`); invalid format message: **"Enter a valid email address."**
 - **FR-010**: This feature MUST **introduce** `MenuBar` in `App.vue` (`<MenuBar />` above `<v-main>`). `MenuBar` MUST be visible on `login`, `register`, and `home`.
@@ -141,7 +141,7 @@ Feature 1 establishes identity; Features 2–3 enforce per-user data boundaries.
   "email": "jdoe@example.com",
   "fName": "Jane",
   "lName": "Doe",
-  "role": "student",
+  "role": "manager",
   "token": "<jwt>"
 }
 ```
@@ -204,7 +204,7 @@ Feature 1 establishes identity; Features 2–3 enforce per-user data boundaries.
 | `email`    | STRING      | Required, unique                   |
 | `username` | STRING(100) | Required, unique; stored lowercase |
 | `password` | STRING(255) | Required; bcrypt hash only         |
-| `role`     | STRING(20)  | Default `student`                  |
+| `role`     | STRING(20)  | Default `manager`                  |
 
 ### `sessions` table
 
