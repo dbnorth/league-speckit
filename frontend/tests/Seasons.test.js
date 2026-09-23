@@ -5,10 +5,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { flushPromises } from "@vue/test-utils";
 import SeasonList from "../src/views/SeasonList.vue";
+import Season from "../src/views/Season.vue";
 import SeasonForm from "../src/components/SeasonForm.vue";
+import GameForm from "../src/components/GameForm.vue";
 import seasonServices from "../src/services/seasonServices.js";
 import leagueServices from "../src/services/leagueServices.js";
-import { mountWithPlugins } from "./testUtils.js";
+import gameServices from "../src/services/gameServices.js";
+import teamServices from "../src/services/teamServices.js";
+import { formatDate } from "../src/config/validation.js";
+import { createTestRouter, mountWithPlugins } from "./testUtils.js";
 
 vi.mock("../src/services/seasonServices.js", () => ({
   default: {
@@ -22,6 +27,19 @@ vi.mock("../src/services/seasonServices.js", () => ({
 vi.mock("../src/services/leagueServices.js", () => ({
   default: {
     getleagues: vi.fn(),
+  },
+}));
+
+vi.mock("../src/services/gameServices.js", () => ({
+  default: {
+    getgames: vi.fn(),
+    creategame: vi.fn(),
+  },
+}));
+
+vi.mock("../src/services/teamServices.js", () => ({
+  default: {
+    getteams: vi.fn(),
   },
 }));
 
@@ -39,6 +57,59 @@ const fall2026 = {
   leagueId: 1,
   league: soccerLeague,
 };
+
+const okcStrikers = {
+  id: 1,
+  name: "OKC Strikers",
+  leagueId: 1,
+};
+
+const tulsaFc = {
+  id: 2,
+  name: "Tulsa FC",
+  leagueId: 1,
+};
+
+const memorialGame = {
+  id: 1,
+  seasonId: 1,
+  gameDate: "2026-09-12",
+  startTime: "18:00:00",
+  location: "Memorial Field",
+  homeTeamId: 1,
+  visitingTeamId: 2,
+  homeTeamScore: null,
+  visitingTeamScore: null,
+  season: fall2026,
+  homeTeam: okcStrikers,
+  visitingTeam: tulsaFc,
+};
+
+const northFieldGame = {
+  id: 2,
+  seasonId: 2,
+  gameDate: "2026-03-12",
+  startTime: "10:00:00",
+  location: "North Field",
+  homeTeamId: 1,
+  visitingTeamId: 2,
+  homeTeamScore: null,
+  visitingTeamScore: null,
+  homeTeam: okcStrikers,
+  visitingTeam: tulsaFc,
+};
+
+const validGameForm = (overrides = {}) => ({
+  seasonId: 1,
+  gameDate: "2026-09-12",
+  startTime: "18:00",
+  location: "Memorial Field",
+  homeTeamId: 1,
+  visitingTeamId: 2,
+  homeTeamScore: "",
+  visitingTeamScore: "",
+  ...overrides,
+});
 
 const validSeasonForm = (overrides = {}) => ({
   name: "2026 Fall",
@@ -66,12 +137,29 @@ const fillSeasonForm = async (wrapper, overrides = {}) => {
   await form.setValue(validSeasonForm(overrides));
 };
 
+const fillGameForm = async (wrapper, overrides = {}) => {
+  const form = wrapper.findComponent(GameForm);
+  await form.setValue(validGameForm(overrides));
+};
+
+const mountOptions = {
+  attachTo: document.body,
+  global: {
+    stubs: { VDialog: VDialogStub },
+  },
+};
+
 const mountSeasons = async () => {
-  const mounted = await mountWithPlugins(SeasonList, {
-    attachTo: document.body,
-    global: {
-      stubs: { VDialog: VDialogStub },
-    },
+  const mounted = await mountWithPlugins(SeasonList, mountOptions);
+  await flushPromises();
+  return mounted;
+};
+
+const mountSeason = async () => {
+  const router = await createTestRouter("/seasons/1");
+  const mounted = await mountWithPlugins(Season, {
+    ...mountOptions,
+    router,
   });
   await flushPromises();
   return mounted;
@@ -83,6 +171,9 @@ describe("Feature 2 — Season Management", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     seasonServices.getseasons.mockResolvedValue({ data: [] });
+    gameServices.getgames.mockResolvedValue({ data: [] });
+    gameServices.creategame.mockResolvedValue({ data: memorialGame });
+    teamServices.getteams.mockResolvedValue({ data: [okcStrikers, tulsaFc] });
     seasonServices.createseason.mockResolvedValue({ data: fall2026 });
     seasonServices.updateseason.mockResolvedValue({ data: fall2026 });
     seasonServices.deleteseason.mockResolvedValue({ data: { message: "season deleted successfully." } });
@@ -359,6 +450,132 @@ describe("Feature 2 — Season Management", () => {
       expect(seasonServices.deleteseason).not.toHaveBeenCalled();
       expect(wrapper.find(".v-dialog-stub").exists()).toBe(false);
       expect(wrapper.text()).toContain("2026 Fall");
+    });
+  });
+});
+
+describe("Feature 7 — Season View", () => {
+  let wrapper;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    seasonServices.getseasons.mockResolvedValue({ data: [fall2026] });
+    leagueServices.getleagues.mockResolvedValue({ data: [soccerLeague] });
+    gameServices.getgames.mockResolvedValue({ data: [] });
+    gameServices.creategame.mockResolvedValue({ data: memorialGame });
+    teamServices.getteams.mockResolvedValue({ data: [okcStrikers, tulsaFc] });
+  });
+
+  afterEach(() => {
+    wrapper?.unmount();
+  });
+
+  describe("US-7.1 — Open a season from the list", () => {
+    it("season rows show a view season action", async () => {
+      const mounted = await mountSeasons();
+      wrapper = mounted.wrapper;
+
+      expect(wrapper.get('[aria-label="Open season"]').exists()).toBe(true);
+    });
+
+    it("User opens a season from the seasons list", async () => {
+      const mounted = await mountSeasons();
+      wrapper = mounted.wrapper;
+
+      await wrapper.get('[aria-label="Open season"]').trigger("click");
+      await flushPromises();
+
+      expect(mounted.router.currentRoute.value.name).toBe("season");
+      expect(mounted.router.currentRoute.value.params.seasonId).toBe("1");
+    });
+  });
+
+  describe("US-7.2 — View season info and games", () => {
+    it("Season view shows season info", async () => {
+      const mounted = await mountSeason();
+      wrapper = mounted.wrapper;
+
+      expect(wrapper.text()).toContain("2026 Fall");
+      expect(wrapper.text()).toContain("OKC Youth Soccer");
+      expect(wrapper.text()).toContain(formatDate("2026-08-15"));
+      expect(wrapper.text()).toContain(formatDate("2026-12-15"));
+      expect(wrapper.text()).toContain("Add Games");
+    });
+
+    it("Season view lists games for that season", async () => {
+      gameServices.getgames.mockResolvedValue({ data: [memorialGame] });
+      const mounted = await mountSeason();
+      wrapper = mounted.wrapper;
+
+      expect(wrapper.text()).toContain("Memorial Field");
+    });
+
+    it("Season view does not list games from another season", async () => {
+      gameServices.getgames.mockResolvedValue({
+        data: [memorialGame, northFieldGame],
+      });
+      const mounted = await mountSeason();
+      wrapper = mounted.wrapper;
+
+      expect(wrapper.text()).toContain("Memorial Field");
+      expect(wrapper.text()).not.toContain("North Field");
+    });
+
+    it("User has no games in the season", async () => {
+      const mounted = await mountSeason();
+      wrapper = mounted.wrapper;
+
+      expect(wrapper.text()).toContain("No games yet. Add the first game.");
+    });
+  });
+
+  describe("US-7.3 — Add a game defaulted to this season", () => {
+    it("User selects to add a game from the season view", async () => {
+      const mounted = await mountSeason();
+      wrapper = mounted.wrapper;
+
+      await clickButton(wrapper, "Add Games");
+
+      expect(wrapper.text()).toContain("Add Game");
+      expect(wrapper.findComponent(GameForm).props("modelValue").seasonId).toBe(1);
+    });
+
+    it("User creates a game from the season view", async () => {
+      gameServices.getgames
+        .mockResolvedValueOnce({ data: [] })
+        .mockResolvedValue({ data: [memorialGame] });
+
+      const mounted = await mountSeason();
+      wrapper = mounted.wrapper;
+
+      await clickButton(wrapper, "Add Games");
+      await fillGameForm(wrapper);
+      await clickButton(wrapper, "Create");
+
+      expect(gameServices.creategame).toHaveBeenCalledWith({
+        seasonId: 1,
+        gameDate: "2026-09-12",
+        startTime: "18:00",
+        location: "Memorial Field",
+        homeTeamId: 1,
+        visitingTeamId: 2,
+        homeTeamScore: null,
+        visitingTeamScore: null,
+      });
+      expect(wrapper.find(".v-dialog-stub").exists()).toBe(false);
+      expect(wrapper.text()).toContain("Memorial Field");
+    });
+
+    it("User creates a game from the season view with a missing required field", async () => {
+      const mounted = await mountSeason();
+      wrapper = mounted.wrapper;
+
+      await clickButton(wrapper, "Add Games");
+      await fillGameForm(wrapper, { location: "" });
+      await clickButton(wrapper, "Create");
+
+      expect(gameServices.creategame).not.toHaveBeenCalled();
+      expect(wrapper.text()).toContain("Required");
     });
   });
 });

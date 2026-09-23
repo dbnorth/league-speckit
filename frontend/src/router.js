@@ -4,6 +4,7 @@ import Login from "./views/Login.vue";
 import Register from "./views/Register.vue";
 import Home from "./views/Home.vue";
 import Seasons from "./views/SeasonList.vue";
+import Season from "./views/Season.vue";
 import Leagues from "./views/LeagueList.vue";
 import People from "./views/PeopleList.vue";
 import Teams from "./views/TeamList.vue";
@@ -34,6 +35,11 @@ const router = createRouter({
       path: "/seasons",
       name: "seasons",
       component: Seasons,
+    },
+    {
+      path: "/seasons/:seasonId",
+      name: "season",
+      component: Season,
     },
     {
       path: "/leagues",

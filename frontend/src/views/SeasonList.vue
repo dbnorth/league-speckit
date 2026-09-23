@@ -1,9 +1,12 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
 import seasonServices from "../services/seasonServices.js";
 import leagueServices from "../services/leagueServices.js";
 import SeasonForm from "../components/SeasonForm.vue";
 import { toDateInputValue, formatDate } from "../config/validation.js";
+
+const router = useRouter();
 
 const emptyForm = () => ({
   name: "",
@@ -120,6 +123,10 @@ const saveSeason = async () => {
   }
 };
 
+const openSeason = (season) => {
+  router.push({ name: "season", params: { seasonId: season.id } });
+};
+
 const openDeleteDialog = (season) => {
   seasonToDelete.value = season;
   deleteDialogOpen.value = true;
@@ -203,6 +210,14 @@ onMounted(retrieveSeasons);
               <td>{{ formatDate(season.startDate) }}</td>
               <td>{{ formatDate(season.endDate) }}</td>
               <td>
+                <v-icon
+                  size="small"
+                  class="mx-4"
+                  aria-label="Open season"
+                  @click="openSeason(season)"
+                >
+                  mdi-calendar
+                </v-icon>
                 <v-icon
                   size="small"
                   class="mx-4"

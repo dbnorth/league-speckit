@@ -54,6 +54,21 @@ describe("Feature 2 — Season Management", () => {
   });
 });
 
+describe("Feature 7 — Season View", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  describe("US-7.4 — Restrict the season view to admins", () => {
+    it("Unauthenticated user navigates to a season", async () => {
+      await router.push("/login");
+      await router.push("/seasons/1");
+
+      expect(router.currentRoute.value.name).toBe("login");
+    });
+  });
+});
+
 describe("Feature 3 — League Management", () => {
   beforeEach(() => {
     localStorage.clear();
