@@ -67,9 +67,9 @@ const retrieveGames = async () => {
 
   try {
     const [gamesResponse, seasonsResponse, teamsResponse] = await Promise.all([
-      gameServices.getgames(),
-      seasonServices.getseasons(),
-      teamServices.getteams(),
+      gameServices.getGames(),
+      seasonServices.getSeasons(),
+      teamServices.getTeams(),
     ]);
     games.value = gamesResponse.data;
     seasons.value = seasonsResponse.data;
@@ -135,9 +135,9 @@ const saveGame = async () => {
 
   try {
     if (isAddMode.value) {
-      await gameServices.creategame(payload);
+      await gameServices.createGame(payload);
     } else {
-      await gameServices.updategame(editingId.value, {
+      await gameServices.updateGame(editingId.value, {
         ...payload,
         gameId: editingId.value,
       });
@@ -173,7 +173,7 @@ const confirmDeleteGame = async () => {
   listError.value = "";
 
   try {
-    await gameServices.deletegame(gameToDelete.value.id);
+    await gameServices.deleteGame(gameToDelete.value.id);
     closeDeleteDialog();
     await retrieveGames();
   } catch (error) {

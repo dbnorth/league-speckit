@@ -1,6 +1,6 @@
 # Data Model Reference
 
-**Status:** Feature 8 create-season-games (plus Features 2–7 seasons/leagues/people/teams/games/season view, auth, and leftover section/faculty tables).
+**Status:** Feature 8 create-season-games (plus Features 1–7 auth, seasons, leagues, people, teams, games, and season view).
 
 Update this file when a feature that defines schema merges to `dev`.
 
@@ -94,4 +94,4 @@ Unique indexes on (`teamId`, `personId`) and (`teamId`, `number`). `teamId` uses
 
 ## Associations
 
-`Season belongsTo League` (`RESTRICT`). `League hasMany Season`. `Person belongsTo User` (`userId`, optional, `onDelete: SET NULL`). `User hasOne Person`. `Team belongsTo League` (`RESTRICT`). `League hasMany Team`. `Player belongsTo Team` (`CASCADE`). `Player belongsTo Person` (`RESTRICT`). `Team hasMany Player`. `Person hasMany Player`. `Game belongsTo Season` (`RESTRICT`). `Season hasMany Game`. `Game belongsTo Team` as `homeTeam` (`RESTRICT`). `Game belongsTo Team` as `visitingTeam` (`RESTRICT`). `Team hasMany Game` as `homeGames` and `visitingGames`. Leftover section/faculty tables may still exist until later features are rewritten.
+`Season belongsTo League` (`RESTRICT`). `League hasMany Season`. `Person belongsTo User` (`userId`, optional, `onDelete: SET NULL`). `User hasOne Person`. `Team belongsTo League` (`RESTRICT`). `League hasMany Team`. `Player belongsTo Team` (`CASCADE`). `Player belongsTo Person` (`RESTRICT`). `Team hasMany Player`. `Person hasMany Player`. `Game belongsTo Season` (`RESTRICT`). `Season hasMany Game`. `Game belongsTo Team` as `homeTeam` (`RESTRICT`). `Game belongsTo Team` as `visitingTeam` (`RESTRICT`). `Team hasMany Game` as `homeGames` and `visitingGames`.

@@ -4,6 +4,7 @@ Spec-driven development (SDD) source of truth for **this** application.
 No application code may be written unless it maps to a requirement in one of these files.
 
 **Methodology:** [framework.md](./framework.md) — how to write, trace, and ship feature specs.  
+**Copy a catalog:** [docs/STUDENT-GUIDE.md](../docs/STUDENT-GUIDE.md) — clone League, not the scheduler.  
 **Student guide (requirements):** [writing-feature-requirements.md](./writing-feature-requirements.md) — stories, FRs, initial data model, Gherkin AC.  
 **Student guide (design):** [writing-feature-design.md](./writing-feature-design.md) — ownership, API, screens, test map, DoD, out of scope.  
 **Student guide (living reference):** [reference/writing-living-reference.md](./reference/writing-living-reference.md) — update api / data-model / behavior in the same PR.

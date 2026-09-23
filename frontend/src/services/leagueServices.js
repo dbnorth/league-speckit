@@ -1,19 +1,19 @@
 import apiClient from "./services.js";
 
 const leagueServices = {
-  getleagues() {
+  getLeagues() {
     return apiClient.get("leagues");
   },
 
-  createleague(league) {
+  createLeague(league) {
     return apiClient.post("leagues", league);
   },
 
-  updateleague(leagueId, league) {
+  updateLeague(leagueId, league) {
     return apiClient.put(`leagues/${leagueId}`, league);
   },
 
-  deleteleague(leagueId) {
+  deleteLeague(leagueId) {
     return apiClient.delete(`leagues/${leagueId}`);
   },
 };

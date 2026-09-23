@@ -1,23 +1,23 @@
 import apiClient from "./services.js";
 
 const seasonServices = {
-  getseasons() {
+  getSeasons() {
     return apiClient.get("seasons");
   },
 
-  createseason(season) {
+  createSeason(season) {
     return apiClient.post("seasons", season);
   },
 
-  updateseason(seasonId, season) {
+  updateSeason(seasonId, season) {
     return apiClient.put(`seasons/${seasonId}`, season);
   },
 
-  deleteseason(seasonId) {
+  deleteSeason(seasonId) {
     return apiClient.delete(`seasons/${seasonId}`);
   },
 
-  creategames(seasonId) {
+  createGames(seasonId) {
     return apiClient.post(`seasons/${seasonId}/games`);
   },
 };

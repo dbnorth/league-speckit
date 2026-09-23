@@ -46,8 +46,8 @@ const retrievePeople = async () => {
 
   try {
     const [peopleResponse, usersResponse] = await Promise.all([
-      peopleServices.getpeople(),
-      userServices.getusers(),
+      peopleServices.getPeople(),
+      userServices.getUsers(),
     ]);
     people.value = peopleResponse.data;
     users.value = usersResponse.data;
@@ -109,9 +109,9 @@ const savePerson = async () => {
 
   try {
     if (isAddMode.value) {
-      await peopleServices.createperson(payload);
+      await peopleServices.createPerson(payload);
     } else {
-      await peopleServices.updateperson(editingId.value, {
+      await peopleServices.updatePerson(editingId.value, {
         ...payload,
         personId: editingId.value,
       });
@@ -149,7 +149,7 @@ const confirmDeletePerson = async () => {
   listError.value = "";
 
   try {
-    await peopleServices.deleteperson(personToDelete.value.id);
+    await peopleServices.deletePerson(personToDelete.value.id);
     closeDeleteDialog();
     await retrievePeople();
   } catch (error) {

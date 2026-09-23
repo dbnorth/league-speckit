@@ -63,9 +63,9 @@ const retrieveTeam = async () => {
 
   try {
     const [teamsResponse, leaguesResponse, peopleResponse] = await Promise.all([
-      teamServices.getteams(),
-      leagueServices.getleagues(),
-      peopleServices.getpeople(),
+      teamServices.getTeams(),
+      leagueServices.getLeagues(),
+      peopleServices.getPeople(),
     ]);
     leagues.value = leaguesResponse.data;
     people.value = peopleResponse.data;
@@ -113,7 +113,7 @@ const saveTeam = async () => {
   saving.value = true;
 
   try {
-    await teamServices.updateteam(team.value.id, {
+    await teamServices.updateTeam(team.value.id, {
       name: form.value.name.trim(),
       leagueId: form.value.leagueId,
       homeField: form.value.homeField.trim(),
@@ -173,9 +173,9 @@ const savePlayer = async () => {
 
   try {
     if (isAddPlayerMode.value) {
-      await teamServices.createplayer(team.value.id, payload);
+      await teamServices.createPlayer(team.value.id, payload);
     } else {
-      await teamServices.updateplayer(
+      await teamServices.updatePlayer(
         team.value.id,
         editingPlayerId.value,
         payload,
@@ -213,7 +213,7 @@ const confirmRemovePlayer = async () => {
   removingPlayer.value = true;
 
   try {
-    await teamServices.deleteplayer(team.value.id, playerToRemove.value.id);
+    await teamServices.deletePlayer(team.value.id, playerToRemove.value.id);
     closeRemovePlayerDialog();
     await retrieveTeam();
   } catch (error) {

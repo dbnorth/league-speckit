@@ -34,7 +34,7 @@ const retrieveLeagues = async () => {
   listError.value = "";
 
   try {
-    const response = await leagueServices.getleagues();
+    const response = await leagueServices.getLeagues();
     leagues.value = response.data;
   } catch (error) {
     listError.value =
@@ -86,9 +86,9 @@ const saveLeague = async () => {
 
   try {
     if (isAddMode.value) {
-      await leagueServices.createleague(payload);
+      await leagueServices.createLeague(payload);
     } else {
-      await leagueServices.updateleague(editingId.value, {
+      await leagueServices.updateLeague(editingId.value, {
         ...payload,
         leagueId: editingId.value,
       });
@@ -126,7 +126,7 @@ const confirmDeleteLeague = async () => {
   listError.value = "";
 
   try {
-    await leagueServices.deleteleague(leagueToDelete.value.id);
+    await leagueServices.deleteLeague(leagueToDelete.value.id);
     closeDeleteDialog();
     await retrieveLeagues();
   } catch (error) {
