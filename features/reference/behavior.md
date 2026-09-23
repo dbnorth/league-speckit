@@ -56,3 +56,8 @@
 | **Games** menu and `/games` are admin-only in the UI | `MenuBar` shows **Games** when `user.role === "admin"` | Feature 6 |
 | Menu order is Leagues, Teams, Games, People, Seasons | `MenuBar` catalog buttons | Feature 6 |
 | Unauthenticated `/games` redirects to login | Router `beforeEach` | Feature 6 |
+| Season list opens a season view | **Open season** icon (`mdi-calendar`) goes to `/seasons/:seasonId` | Feature 7 |
+| Season view heading shows name, league, start date, and end date | `Season.vue` heading area | Feature 7 |
+| Season view lists only that season's games | Filter `GET /league/games` by `seasonId` | Feature 7 |
+| **Add Games** on the season view defaults `seasonId` | Add Game dialog opens with this season selected | Feature 7 |
+| Unauthenticated `/seasons/:seasonId` redirects to login | Router `beforeEach` | Feature 7 |
